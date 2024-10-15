@@ -30,7 +30,6 @@ Our focus is on the two top brands in the liquid laundry detergent category, *Ti
 
 
 
-
 # Packages
 
 Make sure to install two packages that we have not used before: fixest and knitr.
@@ -41,6 +40,8 @@ library(data.table)
 library(fixest)
 library(knitr)
 library(ggplot2)
+
+# trying commit
 ```
 
 \newpage
