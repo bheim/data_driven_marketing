@@ -9,7 +9,6 @@ header-includes: \usepackage{booktabs}
 graphics: yes
 urlcolor: blue
 ---
-HI THIS IS PIERRE. TESTING TO SEE IF THIS WORKS. PLEASE WORK
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = FALSE,
