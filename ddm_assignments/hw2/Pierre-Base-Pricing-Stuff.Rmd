@@ -39,8 +39,6 @@ library(data.table)
 library(fixest)
 library(knitr)
 library(ggplot2)
-
-# trying commit
 ```
 
 \newpage
