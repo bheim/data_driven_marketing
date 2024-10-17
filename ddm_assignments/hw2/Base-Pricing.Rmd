@@ -51,7 +51,7 @@ library(ggplot2)
 The data are located in this folder:
 
 ```{r}
-data_folder = "C:/Users/gcompiani/Dropbox/Teaching/37105/Assignments/02 Base-Pricing-Analysis/Data"
+data_folder = "data"
 ```
 
 \bigskip
