@@ -139,11 +139,15 @@ load("ddm_assignments/hw2/data/brand_move_7012.RData")
 library(data.table) 
 setnames(move, old = "promo_dummy", new = "promotion")
 setnames(move, old = "units", new = "quantity")
+setnames(move, old = "brand_code_uc", new = "product_id")
 move$promotion <- as.numeric(move$promotion)
 head(move)
-final_data <- merge(move, selected_brands, by = "brand_name", all = False)
+```
+```{r}
+final_data <- merge(move, selected_brands, by = "product_id", all = FALSE)
 print(final_data)
 ```
+
 ## Remove outliers
 
 Most data contain some "flaws" or outliers. Here is an easy way of removing such outliers:
