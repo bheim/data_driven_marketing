@@ -164,9 +164,14 @@ isOutlier <- function(x, threshold_bottom, threshold_top) {
 ```
 
 *Now run this function on the price data, separately for each brand and store. Then tabulate the number of outliers, and remove the corresponding observations from the data set.*
-
 I recommend to use a lower threshold (`threshold_bottom`) value of 0.35 and an upper threshold (`threshold_top`) of 2.5.
 
+```{r}
+threshold_bottom <- 0.35  
+threshold_top <- 2.5   
+outliers <- isOutlier(final_data$price.x, threshold_bottom, threshold_top)
+print(outliers)
+```
 
 ## Reshape the movement data from long to wide format
 
