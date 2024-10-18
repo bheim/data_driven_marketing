@@ -127,6 +127,8 @@ data <- data.frame(
 selected_brands <- data[data$product_name %in% c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ'), ]
 
 selected_brands$brand_name <- c('Tide', 'Purex', 'Gain', 'ArmHammer')
+
+print(selected_brands)
 ```
 
 ## Prepare the movement data
