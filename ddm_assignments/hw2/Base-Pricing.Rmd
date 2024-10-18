@@ -134,6 +134,10 @@ print(selected_brands)
 ## Prepare the movement data
 
 *Load the movement data, and---for better readability---change the variable names from `units` to `quantity` and from `promo_dummy` to `promotion` (you can use the `setnames` command for this). Change the data type of the `promotion` variable from `logical` to `numeric` using the `as.numeric` function. Finally, merge the new `brand_name` variable with the movement table (more precisely, perform an inner join, i.e. retain all observations that are present in both the parent and child data sets).
+```{r}
+load("ddm_assignments/hw2/data/brand_move_7012.RData")
+print(move)
+```
 
 ## Remove outliers
 
