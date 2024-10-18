@@ -141,8 +141,9 @@ setnames(move, old = "promo_dummy", new = "promotion")
 setnames(move, old = "units", new = "quantity")
 move$promotion <- as.numeric(move$promotion)
 head(move)
+final_data <- merge(move, selected_brands, by = "brand_name", all = False)
+print(final_data)
 ```
-
 ## Remove outliers
 
 Most data contain some "flaws" or outliers. Here is an easy way of removing such outliers:
