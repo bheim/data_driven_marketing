@@ -117,17 +117,16 @@ Note that we will add the brand names to the quantity, price, and promotion vari
 ```{r}
 data <- data.frame(
   product_id = c(653791, 623280, 557775, 507562, 503626),
-  product_name = c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ', 'ALL - H-D LIQ'),git 
+  product_name = c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ', 'ALL - H-D LIQ'),
   category = c('DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID'),
   quantity = c(7012, 4956, 1201, 1010, 4412),
   price = c(7, 9, 10, 15, 12),
   promotion = c(1, 0, 1, 1, 0)
 )
+
 selected_brands <- data[data$product_name %in% c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ'), ]
 
 selected_brands$brand_name <- c('Tide', 'Purex', 'Gain', 'ArmHammer')
-
-gitprint(selected_brands)
 ```
 
 ## Prepare the movement data
