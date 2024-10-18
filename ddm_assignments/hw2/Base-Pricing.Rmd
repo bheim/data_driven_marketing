@@ -9,7 +9,6 @@ header-includes: \usepackage{booktabs}
 graphics: yes
 urlcolor: blue
 ---
-Pierre Testing :)
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = FALSE,
                       fig.width = 4.5, fig.height = 3, fig.align = "right")
@@ -115,7 +114,21 @@ selected_module = 7012                 # Laundry detergent
 *Let's assign each brand a new name using a new variable, `brand_name`, and give the four brands simple names such as `Tide`, `Gain`, `ArmHammer`, and `Purex`. These simplified brand names will make our code and the estimation output more readable.* More specifically, create a new data containing the four selected brands and add to it the `brand_name` variable.
 
 Note that we will add the brand names to the quantity, price, and promotion variables. In R, `price_ArmHammer` (as well as `price_Arm_Hammer`) are legal variable names, but `price_Arm&Hammer` and `price_Arm & Hammer` are not, and hence I do not suggest the brand names `Arm&Hammer` or `Arm & Hammer`.
+```{r}
+data <- data.frame(
+  product_id = c(653791, 623280, 557775, 507562, 503626),
+  product_name = c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ', 'ALL - H-D LIQ'),git 
+  category = c('DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID'),
+  quantity = c(7012, 4956, 1201, 1010, 4412),
+  price = c(7, 9, 10, 15, 12),
+  promotion = c(1, 0, 1, 1, 0)
+)
+selected_brands <- data[data$product_name %in% c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ'), ]
 
+selected_brands$brand_name <- c('Tide', 'Purex', 'Gain', 'ArmHammer')
+
+gitprint(selected_brands)
+```
 
 ## Prepare the movement data
 
