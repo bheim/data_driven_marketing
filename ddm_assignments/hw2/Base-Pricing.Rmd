@@ -198,8 +198,12 @@ head(wide_data)
 ## Merge store information with the movement data
 
 *Now merge the movement data with the store meta data, in particular with the retailer code, the Scantrack (SMM) market code, and the Scantrack market description. But only with the store meta data where we have a valid retailer code. Hence, we need to remove store data if the retailer code is missing (`NA`). Use the `is.na` function to check if `retailer_code` is `NA` or not.*
+```{r}
+valid_stores <- wide_data[!is.na(stores$retailer_code), ]
+merged_data <- merge(move, valid_stores, by = "store_code_uc", all.x = TRUE)
+head(merged_data)
 
-
+```
 ## Create time variables or trends
 
 *A time trend records the progress of time. For example, a time trend at the week-level may equal 1 in the first week in the data, 2 in the second week, etc., whereas a trend at the month-level may equal 1 in the first month, 2 in the second month, etc.*
