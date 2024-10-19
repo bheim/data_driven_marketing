@@ -183,6 +183,18 @@ All the details on casting and the reverse operation (melting from wide to long 
 
 Let's be specific about the structure of the data that we need to use to estimate a demand model. We would like to obtain a table with observations, characterized by a combination of store id (`store_code_uc`) and week (`week_end`) in rows, and information on quantities, prices, and promotions in columns. Quantities, prices, and promotions are brand-specific.
 
+```{r}
+move <- move[, .(store_code_uc, week_end, product_id, quantity, price, promotion)]
+
+wide_data <- dcast(
+  move, 
+  store_code_uc + week_end ~ product_id, 
+  value.var = c("quantity", "price", "promotion")
+)
+
+head(wide_data)
+```
+
 ## Merge store information with the movement data
 
 *Now merge the movement data with the store meta data, in particular with the retailer code, the Scantrack (SMM) market code, and the Scantrack market description. But only with the store meta data where we have a valid retailer code. Hence, we need to remove store data if the retailer code is missing (`NA`). Use the `is.na` function to check if `retailer_code` is `NA` or not.*
