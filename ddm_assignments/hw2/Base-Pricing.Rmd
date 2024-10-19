@@ -215,7 +215,12 @@ head(final_data_with_store)
 
 *I suggest you create a monthly time trend. Use the functions `year` and `month` to extract the year and month components of the week (`week_end`) variable in the movement data (alternatively, you could use the `week` function if you wanted to create a time trend at the week-level). Then, use the following code to create the monthly trend:*
 ```{r}
+libary(lubridate)
+move$week_end <- as.Date(move$week_end)
+move[, year:=year(week_end)]
+move[, month:=month(week_end)]
 move[, month_trend := 12*(year - min(year)) + month]
+head(move[, .(week_end, year, month, month_trend)])
 ```
 
 
