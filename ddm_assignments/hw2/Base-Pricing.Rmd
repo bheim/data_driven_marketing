@@ -234,9 +234,6 @@ final_data_with_store
 
 \newpage
 
-
-
-
 # Data inspection
 
 ## Observations and geographic coverage
