@@ -228,7 +228,8 @@ head(final_data_with_store[, .(week_end, year, month, month_trend)])
 Finally, *retain only complete cases*, i.e. rows without missing values:
 
 ```{r}
-move = move[complete.cases(move)]
+final_data_with_store = final_data_with_store[complete.cases(final_data_with_store)]
+final_data_with_store
 ```
 
 \newpage
