@@ -38,6 +38,7 @@ library(data.table)
 library(fixest)
 library(knitr)
 library(ggplot2)
+library(scales)
 ```
 
 \newpage
@@ -146,7 +147,6 @@ head(selected_brands)
 ```
 ```{r}
 final_data <- merge(move, selected_brands, by = "product_id", all = FALSE)
-print(final_data)
 ```
 
 ## Remove outliers
@@ -158,7 +158,7 @@ First, we create a function that flags all observations in a vector `x`, for exa
 ```{r}
 isOutlier <- function(x, threshold_bottom, threshold_top) {
    is_outlier = rep(FALSE, times = length(x))
-   median_x   = median(x, na.rm = TRUE)
+   median_x = median(x, na.rm = TRUE)
    is_outlier[x/median_x < threshold_bottom | x/median_x > threshold_top] = TRUE
    return(is_outlier)
 }
@@ -168,9 +168,16 @@ isOutlier <- function(x, threshold_bottom, threshold_top) {
 I recommend to use a lower threshold (`threshold_bottom`) value of 0.35 and an upper threshold (`threshold_top`) of 2.5.
 
 ```{r}
-threshold_bottom <- 0.35  
-threshold_top <- 2.5   
-outliers <- isOutlier(final_data$price.x, threshold_bottom, threshold_top)
+threshold_bottom = 0.35  
+threshold_top = 2.5   
+
+final_data[, outliers := isOutlier(price, threshold_bottom, threshold_top), by = .(store_code_uc, brand_name)]
+
+outlier_flags = final_data[, isOutlier(price, threshold_bottom, threshold_top), by = .(store_code_uc, brand_name)]
+total_outliers = sum(outlier_flags$V1)
+print(paste("Total number of outliers:", total_outliers))
+final_data = final_data[!outlier_flags$V1]
+
 ```
 
 ## Reshape the movement data from long to wide format
@@ -183,10 +190,6 @@ All the details on casting and the reverse operation (melting from wide to long 
 
 Let's be specific about the structure of the data that we need to use to estimate a demand model. We would like to obtain a table with observations, characterized by a combination of store id (`store_code_uc`) and week (`week_end`) in rows, and information on quantities, prices, and promotions in columns. Quantities, prices, and promotions are brand-specific.
 
-```{r}
-final_data
-```
-
 
 ```{r}
 head(final_data)
@@ -197,7 +200,7 @@ wide_data <- dcast(
   store_code_uc + week_end ~ brand_name, 
   value.var = c("quantity", "price", "promotion")
 )
-wide_data
+head(wide_data)
 ```
 
 ## Merge store information with the movement data
@@ -284,9 +287,40 @@ We will predict demand for Tide and Gain. For each of these two brands separatel
 
 - *To visualize the (own) price variation, normalize the prices of Tide and Gain by dividing by the average of these prices, and show the histogram of normalized prices.*
 ```{r}
-# 
+tide_average = final_data_with_store[, mean(price_Tide)]
+norm_tide = final_data_with_store[, price_Tide/tide_average]
 
-head(final_data_with_store)
+# Assuming 'normalized_prices' is a vector
+df = data.frame(norm_tide)
+ggplot(df, aes(x = norm_tide)) + 
+  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
+  
+  # Customize x-axis tick marks
+  scale_x_continuous(breaks = seq(min(df$norm_tide), max(df$norm_tide), by = 0.2), 
+                     labels = number_format(accuracy = 0.1)) +
+  
+  labs(title = "Histogram of Normalized Prices of Tide", 
+       x = "Normalized Price", 
+       y = "Frequency") +
+  
+  theme_minimal()
+
+gain_average = final_data_with_store[, mean(price_Gain)]
+norm_gain = final_data_with_store[, price_Gain / gain_average]
+
+df = data.frame(norm_gain)
+ggplot(df, aes(x = norm_gain)) + 
+  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
+  
+  # Customize x-axis tick marks for normalized prices
+ scale_x_continuous(breaks = seq(min(df$norm_gain), max(df$norm_gain), by = 0.2), 
+                     labels = number_format(accuracy = 0.1)) +
+  labs(title = "Histogram of Normalized Prices of Gain", 
+       x = "Normalized Price", 
+       y = "Frequency") +
+  
+  theme_minimal()
+
 ```
 
 
