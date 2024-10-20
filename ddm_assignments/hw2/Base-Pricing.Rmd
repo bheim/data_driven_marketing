@@ -1,6 +1,6 @@
 ---
 title: "Base Pricing Analysis and Price Elasticity Estimation"
-author: "Giovanni Compiani"
+author: "Ben Heim, Marcell Milo-Sidlo, Pierre Chan, Julia Luo, Alicia Soosai"
 output:
   pdf_document:
     number_sections: yes
