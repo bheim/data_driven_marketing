@@ -118,10 +118,10 @@ Note that we will add the brand names to the quantity, price, and promotion vari
 data <- data.frame(
   product_id = c(653791, 623280, 557775, 507562, 503626),
   product_name = c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ', 'ALL - H-D LIQ'),
-  category = c('DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID'),
-  quantity = c(7012, 4956, 1201, 1010, 4412),
-  price = c(7, 9, 10, 15, 12),
-  promotion = c(1, 0, 1, 1, 0)
+  category = c('DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID')#,
+  #quantity = c(7012, 4956, 1201, 1010, 4412),
+  #price = c(7, 9, 10, 15, 12),
+  #promotion = c(1, 0, 1, 1, 0)
 )
 
 selected_brands <- data[data$product_name %in% c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ'), ]
@@ -135,13 +135,14 @@ print(selected_brands)
 
 *Load the movement data, and---for better readability---change the variable names from `units` to `quantity` and from `promo_dummy` to `promotion` (you can use the `setnames` command for this). Change the data type of the `promotion` variable from `logical` to `numeric` using the `as.numeric` function. Finally, merge the new `brand_name` variable with the movement table (more precisely, perform an inner join, i.e. retain all observations that are present in both the parent and child data sets).
 ```{r}
-load("ddm_assignments/hw2/data/brand_move_7012.RData")
+load("data/brand_move_7012.RData")
 library(data.table) 
 setnames(move, old = "promo_dummy", new = "promotion")
 setnames(move, old = "units", new = "quantity")
 setnames(move, old = "brand_code_uc", new = "product_id")
 move$promotion <- as.numeric(move$promotion)
 head(move)
+head(selected_brands)
 ```
 ```{r}
 final_data <- merge(move, selected_brands, by = "product_id", all = FALSE)
@@ -170,7 +171,6 @@ I recommend to use a lower threshold (`threshold_bottom`) value of 0.35 and an u
 threshold_bottom <- 0.35  
 threshold_top <- 2.5   
 outliers <- isOutlier(final_data$price.x, threshold_bottom, threshold_top)
-print(outliers)
 ```
 
 ## Reshape the movement data from long to wide format
@@ -184,22 +184,27 @@ All the details on casting and the reverse operation (melting from wide to long 
 Let's be specific about the structure of the data that we need to use to estimate a demand model. We would like to obtain a table with observations, characterized by a combination of store id (`store_code_uc`) and week (`week_end`) in rows, and information on quantities, prices, and promotions in columns. Quantities, prices, and promotions are brand-specific.
 
 ```{r}
-move <- move[, .(store_code_uc, week_end, product_id, quantity, price, promotion)]
+final_data
+```
+
+
+```{r}
+head(final_data)
+final_data <- final_data[, .(store_code_uc, week_end, brand_name, quantity, price, promotion)]
 
 wide_data <- dcast(
-  move, 
-  store_code_uc + week_end ~ product_id, 
+  final_data, 
+  store_code_uc + week_end ~ brand_name, 
   value.var = c("quantity", "price", "promotion")
 )
-
-head(wide_data)
+wide_data
 ```
 
 ## Merge store information with the movement data
 
 *Now merge the movement data with the store meta data, in particular with the retailer code, the Scantrack (SMM) market code, and the Scantrack market description. But only with the store meta data where we have a valid retailer code. Hence, we need to remove store data if the retailer code is missing (`NA`). Use the `is.na` function to check if `retailer_code` is `NA` or not.*
 ```{r}
-load("~/Desktop/data_driven_marketing/ddm_assignments/Data/Stores.RData")
+load("data/Stores.RData")
 ls()
 print(stores)   
 ```
@@ -240,10 +245,20 @@ final_data_with_store
 
 *First, document the number of observations and the number of unique stores in the data.*
 
+Number of observations:
+```{r}
+final_data_with_store[, .N]
+```
+Number of stores:
+```{r}
+final_data_with_store[, uniqueN(store_code_uc)]
+```
+
+
 *Second, we assesss if the included stores have broad geographic coverage. We hence create a summary table that records the number of observations for each separate Scantrack market:*
 
 ```{r}
-market_coverage = move[, .(n_obs = .N), by = SMM_description]
+market_coverage = final_data_with_store[, .(n_obs = .N), by = SMM_description]
 ```
 
 Note the use of the data.table internal `.N`: `.N` is the number of observations, either in the whole data table, or---as in this case---the number of observations within each group defined by the `by =` statement.
@@ -263,9 +278,17 @@ kable(market_coverage, col.names = c("Scantrack market", "No. obs."))
 
 Before estimating the demand models we would like to understand the degree of price variation in the data. Comment on why this is important for a regression analysis such as demand estimation!
 
+Understanding price variation is important for 3 reasons: 1. extrapolation limits, 2. prices vary by region, 3. the goal of determining elasticity. For the first reason, it is essential we understand how much prices vary as when we create our model, we will not want to extrapolate the model too far beyond where we have data. As far as reason 2, there is likely significant variation across regions and the degree of variation is important to understand when we consider what we should account for in our model, and 3. we have a goal of determining price elasticity and we need to ensure that we have significant variation to project elasticity - if prices rarely vary and only vary a small amount, we will have limited predictive power (due to reason 1).
+
 We will predict demand for Tide and Gain. For each of these two brands separately, we would like to visualize the overall degree of price variation across observations, and also the variation in relative prices with respect to the competing brands.
 
 - *To visualize the (own) price variation, normalize the prices of Tide and Gain by dividing by the average of these prices, and show the histogram of normalized prices.*
+```{r}
+# 
+
+head(final_data_with_store)
+```
+
 
 - *To visualize relative prices, calculate the ratio of Tide and Gain prices with respect to the three competing brands, and show the histogram of relative prices.*
 
