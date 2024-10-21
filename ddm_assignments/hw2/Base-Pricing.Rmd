@@ -10,7 +10,7 @@ graphics: yes
 urlcolor: blue
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = FALSE,
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = TRUE,
                       fig.width = 4.5, fig.height = 3, fig.align = "right")
 ```
 
