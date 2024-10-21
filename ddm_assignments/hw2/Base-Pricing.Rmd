@@ -10,7 +10,7 @@ graphics: yes
 urlcolor: blue
 ---
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = FALSE,
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = TRUE,
                       fig.width = 4.5, fig.height = 3, fig.align = "right")
 ```
 
@@ -287,39 +287,38 @@ We will predict demand for Tide and Gain. For each of these two brands separatel
 
 - *To visualize the (own) price variation, normalize the prices of Tide and Gain by dividing by the average of these prices, and show the histogram of normalized prices.*
 ```{r}
-tide_average = final_data_with_store[, mean(price_Tide)]
-norm_tide = final_data_with_store[, price_Tide/tide_average]
+tide_average = final_data_with_store[, mean(price_Tide, na.rm = TRUE)]
+norm_tide = final_data_with_store[, price_Tide / tide_average]
 
-x_limits <- quantile(df$norm_tide, probs = c(0.05, 0.95), na.rm = TRUE)
-df = data.frame(norm_tide)
-ggplot(df, aes(x = norm_tide)) + 
+df_tide = data.frame(norm_tide)
+
+x_limits = quantile(df_tide$norm_tide, probs = c(0.00, 0.997), na.rm = TRUE)
+
+ggplot(df_tide, aes(x = norm_tide)) + 
   geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
-  
-  # Customize x-axis tick marks
-  scale_x_continuous(breaks = seq(min(df$norm_tide), max(df$norm_tide), by = 0.2), 
-                     labels = number_format(accuracy = 0.1),
-                      limits = x_limits) +
-  
+  scale_x_continuous(breaks = seq(min(df_tide$norm_tide), max(df_tide$norm_tide), by = 0.2), 
+                     labels = scales::number_format(accuracy = 0.1),
+                     limits = x_limits) +
   labs(title = "Histogram of Normalized Prices of Tide", 
        x = "Normalized Price", 
        y = "Frequency") +
-  
   theme_minimal()
 
-gain_average = final_data_with_store[, mean(price_Gain)]
+# Calculate gain_average and normalize prices for Gain
+gain_average = final_data_with_store[, mean(price_Gain, na.rm = TRUE)]
 norm_gain = final_data_with_store[, price_Gain / gain_average]
 
-df = data.frame(norm_gain)
-ggplot(df, aes(x = norm_gain)) + 
+# Create a data frame for Gain's normalized prices
+df_gain = data.frame(norm_gain)
+
+# Plot histogram for normalized Gain prices
+ggplot(df_gain, aes(x = norm_gain)) + 
   geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
-  
-  # Customize x-axis tick marks for normalized prices
- scale_x_continuous(breaks = seq(min(df$norm_gain), max(df$norm_gain), by = 0.2), 
-                     labels = number_format(accuracy = 0.1)) +
+  scale_x_continuous(breaks = seq(min(df_gain$norm_gain, na.rm = TRUE), max(df_gain$norm_gain, na.rm = TRUE), by = 0.2), 
+                     labels = scales::number_format(accuracy = 0.1)) +
   labs(title = "Histogram of Normalized Prices of Gain", 
        x = "Normalized Price", 
        y = "Frequency") +
-  
   theme_minimal()
 
 ```
@@ -328,6 +327,35 @@ ggplot(df, aes(x = norm_gain)) +
 - *To visualize relative prices, calculate the ratio of Tide and Gain prices with respect to the three competing brands, and show the histogram of relative prices.*
 
 Note: To avoid that the scale of a graph is distorted by a few outliers, use the `limits` option in `scale_x_continuous` (see the ggplot2 introduction). This also helps to make the graphs comparable with each other.
+
+```{r}
+df_tide = final_data_with_store[, .(
+  norm_tide = price_Tide / ((price_ArmHammer + price_Purex + price_Gain) / 3)
+), by = week_end]
+
+x_limits = quantile(df_tide$norm_tide, probs = c(0.00, 0.997), na.rm = TRUE)
+
+ggplot(df_tide, aes(x = norm_tide)) + 
+  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
+  scale_x_continuous(limits = x_limits) +
+  labs(title = "Histogram of Relative Prices of Tide",
+       x = "Relative Price of Tide (Tide / Avg Competitors)",
+       y = "Frequency") +
+  theme_minimal()
+
+df_gain = final_data_with_store[, .(
+  norm_ggin = price_Gain / ((price_ArmHammer + price_Purex + price_Tide) / 3)
+), by = week_end]
+
+ggplot(df_gain, aes(x = norm_gain)) + 
+  geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Relative Prices of Gain",
+       x = "Relative Price of Gain (Gain / Avg Competitors)",
+       y = "Frequency") +
+  theme_minimal()
+
+
+```
 
 
 ## Summary of data inspection
