@@ -311,8 +311,24 @@ fit_tide_1 <- feols(log(1 + quantity_503626) ~ log(price_503626), data = final_d
 summary(fit_tide_1)
 ```
 ```{r, Model 2}
+
 fit_tide_2 <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc, data = final_data_with_store)
 summary(fit_tide_2)
+```
+
+```{r, Model 3}
+fit_tide_3 <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend | store_code_uc, data = final_data_with_store)
+summary(fit_tide_3)
+```
+```{r, Model 3 (quadratic)}
+
+fit_tide_3_poly <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend + I(month_trend^2) | store_code_uc, data = final_data_with_store)
+summary(fit_tide_3_poly)
+```
+```{r, Model 4}
+fit_tide_4 <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc + year + month, data = final_data_with_store)
+summary(fit_tide_4)
+
 ```
 
 \bigskip
