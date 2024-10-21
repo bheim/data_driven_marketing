@@ -229,7 +229,14 @@ Finally, *retain only complete cases*, i.e. rows without missing values:
 
 ```{r}
 final_data_with_store = final_data_with_store[complete.cases(final_data_with_store)]
-final_data_with_store
+setDT(final_data_with_store)  # Ensure it is a data.table
+
+# Sort by price_Tide in ascending order
+final_data_with_store_sorted <- final_data_with_store[order(price_Tide)]
+
+# To sort in descending order (highest prices first):
+final_data_with_store_sorted_desc <- final_data_with_store[order(-price_Tide)]
+head(final_data_with_store_sorted_desc)
 ```
 
 \newpage
