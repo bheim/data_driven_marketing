@@ -200,7 +200,7 @@ head(wide_data)
 *Now merge the movement data with the store meta data, in particular with the retailer code, the Scantrack (SMM) market code, and the Scantrack market description. But only with the store meta data where we have a valid retailer code. Hence, we need to remove store data if the retailer code is missing (`NA`). Use the `is.na` function to check if `retailer_code` is `NA` or not.*
 ```{r}
 load("~/Desktop/data_driven_marketing/ddm_assignments/Data/Stores.RData")
-ls()
+ls() 
 print(stores)   
 ```
 ```{r}
