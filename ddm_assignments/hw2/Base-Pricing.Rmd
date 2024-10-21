@@ -370,31 +370,40 @@ head(final_data_with_store)
 ```
 
 ```{r}
+# Log of own price as only input
+fit_base <- feols(log(1 + quantity_503626) ~ log(price_503626), data = final_data_with_store)
+
+# Add store fixed effects
+fit_store_FE <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc, data = final_data_with_store)
+
+# Add a linear time trend
+fit_trend <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend | store_code_uc, data = final_data_with_store)
+
+# Add fixed effects for each year/month
+fit_month_FE <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc + year + month, data = final_data_with_store)
+```
+
+```{r}
+colnames(final_data_with_store)
+```
+
+```{r}
+summary(fit_base)
+```
+
+```{r}
 library(fixest)
 
-fit_tide_1 <- feols(log(1 + quantity_503626) ~ log(price_503626), data = final_data_with_store)
-summary(fit_tide_1)
+etable(fit_base, fit_store_FE, fit_trend, fit_month_FE,
+       tex = TRUE,
+       fitstat = c("n", "r2"), 
+       signif.code = NA,
+       cluster = c("store_code_uc", "month_trend"))
 ```
-```{r, Model 2}
+```{r}
+rm(fit_base, fit_store_FE, fit_trend)
+```
 
-fit_tide_2 <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc, data = final_data_with_store)
-summary(fit_tide_2)
-```
-
-```{r, Model 3}
-fit_tide_3 <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend | store_code_uc, data = final_data_with_store)
-summary(fit_tide_3)
-```
-```{r, Model 3 (quadratic)}
-
-fit_tide_3_poly <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend + I(month_trend^2) | store_code_uc, data = final_data_with_store)
-summary(fit_tide_3_poly)
-```
-```{r, Model 4}
-fit_tide_4 <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc + year + month, data = final_data_with_store)
-summary(fit_tide_4)
-
-```
 
 \bigskip
 
@@ -436,6 +445,21 @@ rm(fit_base, fit_store_FE, fit_trend)
 
 *Now add the competitor prices to the demand model.*
 
+```{r}
+fit_competitor <- feols(
+  log(1 + quantity_503626) ~ log(price_503626) + log(price_623280) + log(price_557775) + log(price_507562) | store_code_uc + year + month,
+  data = final_data_with_store
+)
+summary(fit_competitor)
+```
+
+```{r}
+etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_competitor,
+       tex = TRUE,
+       fitstat = c("n", "r2"), 
+       signif.code = NA,
+       cluster = c("store_code_uc", "month_trend"))
+```
 
 ## Controlling for promotions
 
