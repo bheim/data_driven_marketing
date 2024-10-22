@@ -161,12 +161,20 @@ isOutlier <- function(x, threshold_bottom, threshold_top) {
 I recommend to use a lower threshold (`threshold_bottom`) value of 0.35 and an upper threshold (`threshold_top`) of 2.5.
 
 ```{r}
-final_data
-
 threshold_bottom <- 0.35  
 threshold_top <- 2.5   
-outliers <- isOutlier(final_data$price, threshold_bottom, threshold_top)
 
+final_data[, outlier_flag := isOutlier(price, threshold_bottom, threshold_top), 
+           by = .(store_code_uc, brand_name)]
+
+sum(final_data$outlier_flag)
+
+final_data = final_data[outlier_flag == FALSE]
+
+# removing flag
+final_data[, outlier_flag := NULL]
+
+final_data
 
 ```
 
@@ -181,15 +189,14 @@ All the details on casting and the reverse operation (melting from wide to long 
 Let's be specific about the structure of the data that we need to use to estimate a demand model. We would like to obtain a table with observations, characterized by a combination of store id (`store_code_uc`) and week (`week_end`) in rows, and information on quantities, prices, and promotions in columns. Quantities, prices, and promotions are brand-specific.
 
 ```{r}
-move <- move[, .(store_code_uc, week_end, product_id, quantity, price, promotion)]
+final_data = final_data[, .(store_code_uc, week_end, brand_name, quantity, price, promotion)]
 
-wide_data <- dcast(
-  move, 
-  store_code_uc + week_end ~ product_id, 
+final_data <- dcast(
+  final_data, 
+  store_code_uc + week_end ~ brand_name, 
   value.var = c("quantity", "price", "promotion")
 )
 
-head(wide_data)
 ```
 
 ## Merge store information with the movement data
@@ -202,7 +209,7 @@ print(stores)
 ```
 ```{r}
 valid_store_meta <- stores[!is.na(stores$retailer_code)]
-final_data_with_store <- merge(wide_data, valid_store_meta, by = "store_code_uc", all = FALSE)
+final_data_with_store <- merge(final_data, valid_store_meta, by = "store_code_uc", all = FALSE)
 head(final_data_with_store)
 ```
 
@@ -239,7 +246,7 @@ final_data_with_store = final_data_with_store[complete.cases(final_data_with_sto
 *Second, we assesss if the included stores have broad geographic coverage. We hence create a summary table that records the number of observations for each separate Scantrack market:*
 
 ```{r}
-market_coverage = move[, .(n_obs = .N), by = SMM_description]
+market_coverage = final_data_with_store[, .(n_obs = .N), by = SMM_description]
 ```
 
 Note the use of the data.table internal `.N`: `.N` is the number of observations, either in the whole data table, or---as in this case---the number of observations within each group defined by the `by =` statement.
@@ -297,10 +304,6 @@ ggplot(df_gain, aes(x = norm_gain)) +
        y = "Frequency") +
   theme_minimal()
 
-```
-
-```{r}
-final_data_with_store[,, by = week_end]
 ```
 
 
