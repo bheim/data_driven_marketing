@@ -107,6 +107,9 @@ load(paste0(data_folder, "/Stores.RData"))
 
 ```{r}
 selected_module = 7012                 # Laundry detergent
+laundry = brands[product_module_code == selected_module]
+laundry_sorted = laundry[order(-revenue)][1:4]
+laundry_sorted
 ```
 
 \medskip
@@ -115,19 +118,10 @@ selected_module = 7012                 # Laundry detergent
 
 Note that we will add the brand names to the quantity, price, and promotion variables. In R, `price_ArmHammer` (as well as `price_Arm_Hammer`) are legal variable names, but `price_Arm&Hammer` and `price_Arm & Hammer` are not, and hence I do not suggest the brand names `Arm&Hammer` or `Arm & Hammer`.
 ```{r}
-data <- data.frame(
-  product_id = c(653791, 623280, 557775, 507562, 503626),
-  product_name = c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ', 'ALL - H-D LIQ'),
-  category = c('DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID', 'DETERGENTS - HEAVY DUTY - LIQUID'),
-  quantity = c(7012, 4956, 1201, 1010, 4412),
-  price = c(7, 9, 10, 15, 12),
-  promotion = c(1, 0, 1, 1, 0)
+selected_brands = data.frame(
+  product_id = c(653791, 557775, 507562, 623280),
+  brand_name = c('Tide', 'Gain', 'ArmHammer', 'Purex')
 )
-
-selected_brands <- data[data$product_name %in% c('TIDE - H-D LIQ', 'PUREX - H-D LIQ', 'GAIN - H-D LIQ', 'ARM & HAMMER - H-D LIQ'), ]
-
-selected_brands$brand_name <- c('Tide', 'Purex', 'Gain', 'ArmHammer')
-
 print(selected_brands)
 ```
 
@@ -144,7 +138,7 @@ move$promotion <- as.numeric(move$promotion)
 head(move)
 ```
 ```{r}
-final_data <- merge(move, selected_brands, by = "product_id", all = FALSE)
+final_data = merge(move, selected_brands, by = "product_id", all = FALSE)
 print(final_data)
 ```
 
@@ -167,10 +161,13 @@ isOutlier <- function(x, threshold_bottom, threshold_top) {
 I recommend to use a lower threshold (`threshold_bottom`) value of 0.35 and an upper threshold (`threshold_top`) of 2.5.
 
 ```{r}
+final_data
+
 threshold_bottom <- 0.35  
 threshold_top <- 2.5   
-outliers <- isOutlier(final_data$price.x, threshold_bottom, threshold_top)
-print(outliers)
+outliers <- isOutlier(final_data$price, threshold_bottom, threshold_top)
+
+
 ```
 
 ## Reshape the movement data from long to wide format
@@ -199,7 +196,7 @@ head(wide_data)
 
 *Now merge the movement data with the store meta data, in particular with the retailer code, the Scantrack (SMM) market code, and the Scantrack market description. But only with the store meta data where we have a valid retailer code. Hence, we need to remove store data if the retailer code is missing (`NA`). Use the `is.na` function to check if `retailer_code` is `NA` or not.*
 ```{r}
-load("~/Desktop/data_driven_marketing/ddm_assignments/hw2/data/Stores.RData")
+load("data/Stores.RData")
 ls() 
 print(stores)   
 ```
