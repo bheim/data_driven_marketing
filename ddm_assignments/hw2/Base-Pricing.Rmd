@@ -351,6 +351,8 @@ This stands in contrast to Gain products, who display a bimodal distribution, wi
 
 Controlling for the prices of three competitors, Tide product prices were close to normally distributed around 135-140% of their competitors’ prices. In contrast, Gain displayed a bimodal distribution with peaks centered at the 80% and 120% of competitors’ prices.
 
+5.3 answer
+
 \newpage
 
 
