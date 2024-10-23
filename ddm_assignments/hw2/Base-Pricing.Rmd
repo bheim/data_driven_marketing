@@ -374,17 +374,39 @@ head(final_data_with_store)
 ```
 
 ```{r}
-# Log of own price as only input
-fit_base <- feols(log(1 + quantity_503626) ~ log(price_503626), data = final_data_with_store)
+# First model: Own price only for Tide
+fit_base <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide),
+  data = final_data_with_store
+)
 
-# Add store fixed effects
-fit_store_FE <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc, data = final_data_with_store)
+# Second model: Add store fixed effects
+fit_store_FE <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) | store_code_uc,
+  data = final_data_with_store
+)
 
-# Add a linear time trend
-fit_trend <- feols(log(1 + quantity_503626) ~ log(price_503626) + month_trend | store_code_uc, data = final_data_with_store)
+# Third model: Add a time trend (could be linear or polynomial)
+fit_trend <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + month_trend | store_code_uc,
+  data = final_data_with_store
+)
 
-# Add fixed effects for each year/month
-fit_month_FE <- feols(log(1 + quantity_503626) ~ log(price_503626) | store_code_uc + year + month, data = final_data_with_store)
+# Fourth model: Use fixed effects for each month
+fit_month_FE <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) | store_code_uc + year + month,
+  data = final_data_with_store
+)
+
+fit_promo_Tide <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + promotion_Tide | store_code_uc + year + month,
+  data = final_data_with_store
+)
+
+etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_promo_Tide,
+       tex = TRUE,
+       fitstat = c("n", "r2"), signif.code = NA,
+       cluster = c("store_code_uc", "month_trend"))
 ```
 
 ```{r}
@@ -405,7 +427,7 @@ etable(fit_base, fit_store_FE, fit_trend, fit_month_FE,
        cluster = c("store_code_uc", "month_trend"))
 ```
 ```{r}
-rm(fit_base, fit_store_FE, fit_trend)
+#rm(fit_base, fit_store_FE, fit_trend)
 ```
 
 
@@ -469,6 +491,36 @@ etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_competitor,
 
 *Now add the promotions dummies, first just for Tide, then for all brands. Compare the results. Did controlling for promotions change the own price elasticity estimate in an expected manner?*
 
+```{r}
+
+fit_promo_Tide <- feols(
+  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 | store_code_uc + year + month,
+  data = final_data_with_store
+)
+```
+
+```{r}
+fit_promo_all <- feols(
+  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 + promotion_623280 + promotion_557775 + promotion_507562 | store_code_uc + year + month,
+  data = final_data_with_store
+)
+```
+
+```{r}
+fit_promo_all <- feols(
+  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 + promotion_623280 + promotion_557775 + promotion_507562 | store_code_uc + year + month,
+  data = final_data_with_store
+)
+
+```
+
+```{r, results}
+etable(fit_base, fit_promo_Tide, fit_promo_all,
+       tex = TRUE,
+       fitstat = c("n", "r2"),
+       signif.code = NA,
+       cluster = c("store_code_uc", "month_trend"))
+```
 
 \bigskip
 
