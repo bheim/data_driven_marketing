@@ -345,6 +345,8 @@ ggplot(df_gain, aes(x = norm_gain)) +
 
 *Discuss the data description, including sample size, geographic coverage, and the results on own and relative price variation.*
 
+5.3 answer
+
 \newpage
 
 
