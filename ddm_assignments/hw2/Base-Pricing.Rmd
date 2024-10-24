@@ -135,7 +135,9 @@ setnames(move, old = "promo_dummy", new = "promotion", skip_absent=TRUE)
 setnames(move, old = "units", new = "quantity", skip_absent=TRUE)
 setnames(move, old = "brand_code_uc", new = "product_id", skip_absent=TRUE)
 move$promotion <- as.numeric(move$promotion)
-head(move)
+
+move_with_brands <- merge(move, selected_brands, by = "product_id", all = FALSE)
+head(move_with_brands)
 ```
 ```{r}
 final_data = merge(move, selected_brands, by = "product_id", all = FALSE)
@@ -471,51 +473,28 @@ rm(fit_base, fit_store_FE, fit_trend)
 
 *Now add the competitor prices to the demand model.*
 
-```{r}
-fit_competitor <- feols(
-  log(1 + quantity_503626) ~ log(price_503626) + log(price_623280) + log(price_557775) + log(price_507562) | store_code_uc + year + month,
-  data = final_data_with_store
-)
-summary(fit_competitor)
-```
 
-```{r}
-etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_competitor,
-       tex = TRUE,
-       fitstat = c("n", "r2"), 
-       signif.code = NA,
-       cluster = c("store_code_uc", "month_trend"))
-```
 
 ## Controlling for promotions
 
 *Now add the promotions dummies, first just for Tide, then for all brands. Compare the results. Did controlling for promotions change the own price elasticity estimate in an expected manner?*
 
 ```{r}
+library(fixest)
 
+# First, add promotion dummy for Tide only
 fit_promo_Tide <- feols(
-  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 | store_code_uc + year + month,
+  log(1 + quantity_Tide) ~ log(price_Tide) + promotion_Tide | store_code_uc + year + month,
   data = final_data_with_store
 )
-```
 
-```{r}
+# Second, add promotion dummies for all brands (Tide and Gain)
 fit_promo_all <- feols(
-  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 + promotion_623280 + promotion_557775 + promotion_507562 | store_code_uc + year + month,
-  data = final_data_with_store
-)
-```
-
-```{r}
-fit_promo_all <- feols(
-  log(1 + quantity_503626) ~ log(price_503626) + promotion_503626 + promotion_623280 + promotion_557775 + promotion_507562 | store_code_uc + year + month,
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain | store_code_uc + year + month,
   data = final_data_with_store
 )
 
-```
-
-```{r, results}
-etable(fit_base, fit_promo_Tide, fit_promo_all,
+etable(fit_base_competitor, fit_promo_Tide, fit_promo_all,
        tex = TRUE,
        fitstat = c("n", "r2"),
        signif.code = NA,
@@ -525,6 +504,12 @@ etable(fit_base, fit_promo_Tide, fit_promo_all,
 \bigskip
 
 *Summarize and comment on the estimation results. Was it necessary to control for store fixed effects, time trends/fixed effects, as well as competitor prices and promotions? What do we learn from the magnitudes of the own and cross-price elasticities?*
+
+The estimation results give a lot of information on demand for Tide, especially after controlling for competitor prices, promotions, store-level fixed effects, and time trends. Initially, without controls, the own price elasticity for Tide was very large, which shows extreme price sensitivity. As more controls were added, including store-specific fixed effects and competitor prices, the own price elasticity stabilized at around -4.18. This shows that controlling for these factors reduced potential bias in the estimates and provided a more realistic assessment of Tide's price sensitivity. Of note, the magnitude of the elasticity still reflects a high level of responsiveness to price changes, underscoring the importance of pricing strategies for this product.
+
+The inclusion of competitor prices, particularly Gain's price, significantly improved the model's accuracy. Initially, without controls, the cross-price elasticity for Gain was negative, which contradicts the expected substitution relationship between the two products. However, after controlling for store fixed effects and other factors, the cross-price elasticity became positive, confirming that Tide and Gain are substitutes. This finding highlights the importance of accounting for competitor pricing in demand models to accurately capture the dynamics of consumer behavior in the marketplace.
+
+Promotions also played a key role in driving Tide's demand. The model shows that Tide's promotions lead to a significant increase in sales, with promotions boosting demand by approximately 35%. This suggests that promotions are a highly effective tool in influencing purchasing decisions. Failing to control for promotions could lead to an overstatement of price elasticity, as promotional activities and price changes are often correlated. 
 
 \bigskip
 
