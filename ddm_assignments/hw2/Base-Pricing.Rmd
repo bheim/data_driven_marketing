@@ -393,7 +393,7 @@ fit_store_FE <- feols(
 )
 
 fit_trend <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + month | store_code_uc,
+  log(1 + quantity_Tide) ~ log(price_Tide) + week_end | store_code_uc,
   data = final_data_with_store
 )
 
