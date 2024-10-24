@@ -382,25 +382,21 @@ head(final_data_with_store)
 ```
 
 ```{r}
-# First model: Own price only for Tide
 fit_base <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide),
   data = final_data_with_store
 )
 
-# Second model: Add store fixed effects
 fit_store_FE <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide) | store_code_uc,
   data = final_data_with_store
 )
 
-# Third model: Add a time trend (could be linear or polynomial)
 fit_trend <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + month_trend | store_code_uc,
+  log(1 + quantity_Tide) ~ log(price_Tide) + month | store_code_uc,
   data = final_data_with_store
 )
 
-# Fourth model: Use fixed effects for each month
 fit_month_FE <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide) | store_code_uc + year + month,
   data = final_data_with_store
@@ -411,33 +407,8 @@ fit_promo_Tide <- feols(
   data = final_data_with_store
 )
 
-etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_promo_Tide,
-       tex = TRUE,
-       fitstat = c("n", "r2"), signif.code = NA,
-       cluster = c("store_code_uc", "month_trend"))
+etable(fit_base, fit_store_FE, fit_trend, fit_month_FE, fit_promo_Tide)
 ```
-
-```{r}
-colnames(final_data_with_store)
-```
-
-```{r}
-summary(fit_base)
-```
-
-```{r}
-library(fixest)
-
-etable(fit_base, fit_store_FE, fit_trend, fit_month_FE,
-       tex = TRUE,
-       fitstat = c("n", "r2"), 
-       signif.code = NA,
-       cluster = c("store_code_uc", "month_trend"))
-```
-```{r}
-#rm(fit_base, fit_store_FE, fit_trend)
-```
-
 
 \bigskip
 
@@ -458,10 +429,10 @@ Please **consult the fixest guide on how to use `etable`**, and **go through the
 Here is an example (note that the `fit` objects are the regression outputs---adjust the names if necessary):
 
 ```{r, results = "asis"}
-etable(fit_base, fit_store_FE, fit_trend, fit_month_FE,
-       tex = TRUE,
-       fitstat = c("n", "r2"), signif.code = NA,
-       cluster = c("store_code_uc", "month_trend"))
+#etable(fit_base, fit_store_FE, fit_trend, fit_month_FE,
+       #tex = TRUE,
+       #fitstat = c("n", "r2"), signif.code = NA,
+       #cluster = c("store_code_uc", "month_trend"))
 ```
 
 Note the option `cluster = c("store_code_uc", "month_trend")`, which tells `etable` to show standard errors that are clustered at the store and month level. These clustered standard errors will be larger and more accurate than regular standard errors because they reflect that the error terms in the regression are likely correlated at the store and month level.
@@ -479,6 +450,31 @@ rm(fit_base, fit_store_FE, fit_trend)
 
 *Now add the competitor prices to the demand model.*
 
+```{r}
+library(fixest)
+
+fit_base_competitor <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain),
+  data = final_data_with_store
+)
+
+fit_store_FE_competitor <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) | store_code_uc,
+  data = final_data_with_store
+)
+
+fit_trend_competitor <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month | store_code_uc,
+  data = final_data_with_store
+)
+
+fit_month_FE_competitor <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) | store_code_uc + year + month,
+  data = final_data_with_store
+)
+
+etable(fit_base_competitor, fit_store_FE_competitor, fit_trend_competitor, fit_month_FE_competitor)
+```
 
 
 ## Controlling for promotions
@@ -486,44 +482,76 @@ rm(fit_base, fit_store_FE, fit_trend)
 *Now add the promotions dummies, first just for Tide, then for all brands. Compare the results. Did controlling for promotions change the own price elasticity estimate in an expected manner?*
 
 ```{r}
-library(fixest)
+#Tide
 
-# First, add promotion dummy for Tide only
-fit_promo_Tide <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + promotion_Tide | store_code_uc + year + month,
+fit_base_competitor_promo <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide,
   data = final_data_with_store
 )
 
-# Second, add promotion dummies for all brands (Tide and Gain)
-fit_promo_all <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain | store_code_uc + year + month,
+fit_store_FE_competitor_promo <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide | store_code_uc,
   data = final_data_with_store
 )
 
-etable(fit_base_competitor, fit_promo_Tide, fit_promo_all,
-       tex = TRUE,
-       fitstat = c("n", "r2"),
-       signif.code = NA,
-       cluster = c("store_code_uc", "month_trend"))
+fit_trend_competitor_promo <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month + promotion_Tide | store_code_uc,
+  data = final_data_with_store
+)
+
+fit_month_FE_competitor_promo <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide | store_code_uc + year + month,
+  data = final_data_with_store
+)
+
+etable(fit_base_competitor_promo, fit_store_FE_competitor_promo, fit_trend_competitor_promo, fit_month_FE_competitor_promo)
 ```
+When comparing the models without promotions against the ones with promotions, the latter has less own price elasticity: 3.961 (promotions) vs 5.659 (no promotions). Without controlling for promotions, their effect is mistakenly attributed to price, which inflates the price elasticity. When promotions are included, the model correctly attributes the demand increase to them, resulting in a more accurate, lower price elasticity. This reflects the fact that consumers are less sensitive to price changes alone than the model without promotions suggested, as promotions are often more effective at boosting demand than small price reductions.
+
+```{r}
+# All Brands
+
+fit_base_competitor_promo2 <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex, data = final_data_with_store
+)
+
+fit_store_FE_competitor_promo2 <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc, data = final_data_with_store
+)
+
+fit_trend_competitor_promo2 <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc, data = final_data_with_store
+)
+
+fit_month_FE_competitor_promo2 <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc + year + month, data = final_data_with_store
+)
+
+etable(fit_base_competitor_promo2, fit_store_FE_competitor_promo2, fit_trend_competitor_promo2, fit_month_FE_competitor_promo2)
+
+```
+
+With the exception of the fit_base model, all other models are generally the same compared to the models with the single promotion. 
 
 \bigskip
 
 *Summarize and comment on the estimation results. Was it necessary to control for store fixed effects, time trends/fixed effects, as well as competitor prices and promotions? What do we learn from the magnitudes of the own and cross-price elasticities?*
 
-The estimation results give a lot of information on demand for Tide, especially after controlling for competitor prices, promotions, store-level fixed effects, and time trends. Initially, without controls, the own price elasticity for Tide was very large, which shows extreme price sensitivity. As more controls were added, including store-specific fixed effects and competitor prices, the own price elasticity stabilized at around -4.18. This shows that controlling for these factors reduced potential bias in the estimates and provided a more realistic assessment of Tide's price sensitivity. Of note, the magnitude of the elasticity still reflects a high level of responsiveness to price changes, underscoring the importance of pricing strategies for this product.
-
-The inclusion of competitor prices, particularly Gain's price, significantly improved the model's accuracy. Initially, without controls, the cross-price elasticity for Gain was negative, which contradicts the expected substitution relationship between the two products. However, after controlling for store fixed effects and other factors, the cross-price elasticity became positive, confirming that Tide and Gain are substitutes. This finding highlights the importance of accounting for competitor pricing in demand models to accurately capture the dynamics of consumer behavior in the marketplace.
-
-Promotions also played a key role in driving Tide's demand. The model shows that Tide's promotions lead to a significant increase in sales, with promotions boosting demand by approximately 35%. This suggests that promotions are a highly effective tool in influencing purchasing decisions. Failing to control for promotions could lead to an overstatement of price elasticity, as promotional activities and price changes are often correlated. 
 
 \bigskip
 
 We will use the final model including all variables (I called it `fit_promo_comp`) as our preferred model. To make this final model distinguishable from the regression output for Gain we rename it:
 
 ```{r}
+fit_promo_comp <- feols(
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc + year + month, data = final_data_with_store
+)
+```
+
+```{r}
 fit_Tide = fit_promo_comp
 ```
+
 
 
 ## Demand model for Gain
