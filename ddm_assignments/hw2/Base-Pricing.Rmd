@@ -674,7 +674,7 @@ The goal is to fine-tune prices jointly for Tide and Gain. We hence use the esti
 To predict profits, let's only retain data for one year, 2013:
 
 ```{r}
-move_predict = move[year == 2013]
+move_predict = move[year(week_end) == 2013]
 ```
 
 \bigskip
@@ -684,9 +684,12 @@ Although we have excellent demand data, we do not know the production costs of t
 ```{r}
 gross_margin  = 0.35
 retail_margin = 0.18
+price_Tide = move_predict$price[move_predict$product_id == 653791]
+price_Gain = move_predict$price[move_predict$product_id == 557775]
 
-cost_Tide = (1-gross_margin)*(1-retail_margin)*mean(move_predict$price_Tide)
-cost_Gain = (1-gross_margin)*(1-retail_margin)*mean(move_predict$price_Gain)
+cost_Tide = (1-gross_margin)*(1-retail_margin)*mean(price_Tide, na.rm = TRUE)
+cost_Gain = (1-gross_margin)*(1-retail_margin)*mean(price_Gain, na.rm = TRUE)
+
 ```
 
 As prices are measured in dollars per ounce, these marginal costs are also per ounce.
