@@ -235,6 +235,7 @@ Finally, *retain only complete cases*, i.e. rows without missing values:
 
 ```{r}
 final_data_with_store = final_data_with_store[complete.cases(final_data_with_store)]
+print(final_data_with_store)
 ```
 
 \newpage
@@ -289,14 +290,11 @@ ggplot(df_tide, aes(x = norm_tide)) +
        y = "Frequency") +
   theme_minimal()
 
-# Calculate gain_average and normalize prices for Gain
 gain_average = final_data_with_store[, mean(price_Gain, na.rm = TRUE)]
 norm_gain = final_data_with_store[, price_Gain / gain_average]
 
-# Create a data frame for Gain's normalized prices
 df_gain = data.frame(norm_gain)
 
-# Plot histogram for normalized Gain prices
 ggplot(df_gain, aes(x = norm_gain)) + 
   geom_histogram(binwidth = 0.1, fill = "lightblue", color = "black") +
   scale_x_continuous(breaks = seq(min(df_gain$norm_gain, na.rm = TRUE), max(df_gain$norm_gain, na.rm = TRUE), by = 0.2), 
@@ -345,7 +343,8 @@ ggplot(df_gain, aes(x = norm_gain)) +
 
 ## Summary of data inspection
 
-*Discuss the data description, including sample size, geographic coverage, and the results on own and relative price variation.*
+*Discuss the data description, including sample size, geographic coverage, and the results on own and relative price variation.*. 
+
 From having visualized the provided data, we are able to determine that the largest single market in terms of number of observations, is Los Angeles, with 127 244 unique instances. This is followed by Chicago and Miami, with 88 257 and 56 504 observations respectively.
 
 In terms of own price variation over time, we can see two very different graphs for Tide and Gain products. The graph of the normalized price variation of Tide tells us that for the majority of the time, the price of the product is (mostly) evenly distributed between 70% and 110% of the average price, with most instances of the product being priced between 100-110% of the average price. 
@@ -473,7 +472,8 @@ fit_trend_competitor <- feols(
 
 fit_month_FE_competitor <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + 
-    log(price_ArmHammer) + log(price_Purex) | store_code_uc + year + month, data = final_data_with_store)
+    log(price_ArmHammer) + log(price_Purex) | store_code_uc + year + month, 
+  data = final_data_with_store)
 
 etable(fit_base_competitor, fit_store_FE_competitor, fit_trend_competitor,
        fit_month_FE_competitor)
@@ -501,13 +501,15 @@ fit_store_FE_competitor_promo <- feols(
 
 fit_trend_competitor_promo <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + 
-    log(price_ArmHammer) + log(price_Purex) + month + promotion_Tide | store_code_uc,
+    log(price_ArmHammer) + log(price_Purex) + month + 
+    promotion_Tide | store_code_uc,
   data = final_data_with_store
 )
 
 fit_month_FE_competitor_promo <- feols(
   log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + 
-    log(price_ArmHammer) + log(price_Purex) + promotion_Tide | store_code_uc + year + month,
+    log(price_ArmHammer) + log(price_Purex) + 
+    promotion_Tide | store_code_uc + year + month,
   data = final_data_with_store
 )
 
