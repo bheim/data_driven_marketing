@@ -746,13 +746,14 @@ original_Prices <- final_data_with_store[, c("price_Tide", "price_Gain")]
 ```{r}
 for (i in 1:nrow(profit_DT)) {
    # Perform profit calculations for the price changes indicated in row i of the profit_DT table
-   final_data_with_store$tide_Price = original_Prices$price_Tide * (1 + profit_DT$delta_Tide[i])
-   final_data_with_store$gain_Price = original_Prices$price_Gain * (1 + profit_DT$delta_Gain[i])
+   final_data_with_store$price_Tide = original_Prices$price_Tide * (1 + profit_DT$delta_Tide[i])
+   final_data_with_store$price_Gain = original_Prices$price_Gain * (1 + profit_DT$delta_Gain[i])
+   
    final_data_with_store$quantity_Tide = exp(predict(fit_Tide, newdata = final_data_with_store)) - 1
    final_data_with_store$quantity_Gain = exp(predict(fit_Gain, newdata = final_data_with_store)) - 1
    
-   total_profit_Tide = sum(final_data_with_store$tide_Price * final_data_with_store$quantity_Tide)
-   total_profit_Gain = sum(final_data_with_store$gain_Price * final_data_with_store$quantity_Gain)
+   total_profit_Tide = sum(final_data_with_store$price_Tide * final_data_with_store$quantity_Tide)
+   total_profit_Gain = sum(final_data_with_store$price_Gain * final_data_with_store$quantity_Gain)
    
    profit_DT$profit[i] = total_profit_Tide + total_profit_Gain
 }
