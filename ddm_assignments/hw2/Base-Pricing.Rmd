@@ -459,19 +459,16 @@ fit_base_competitor <- feols(
 )
 
 fit_store_FE_competitor <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) | store_code_uc,
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + log(price_ArmHammer) + log(price_Purex) | store_code_uc,
   data = final_data_with_store
 )
 
 fit_trend_competitor <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month | store_code_uc,
-  data = final_data_with_store
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + log(price_ArmHammer) + log(price_Purex) + month | store_code_uc, data = final_data_with_store
 )
 
 fit_month_FE_competitor <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) | store_code_uc + year + month,
-  data = final_data_with_store
-)
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + log(price_ArmHammer) + log(price_Purex) | store_code_uc + year + month, data = final_data_with_store)
 
 etable(fit_base_competitor, fit_store_FE_competitor, fit_trend_competitor, fit_month_FE_competitor)
 ```
@@ -512,22 +509,31 @@ When comparing the models without promotions against the ones with promotions, t
 # All Brands
 
 fit_base_competitor_promo2 <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex, data = final_data_with_store
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + 
+    promotion_Gain + promotion_ArmHammer + promotion_Purex, 
+  data = final_data_with_store
 )
 
 fit_store_FE_competitor_promo2 <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc, data = final_data_with_store
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + 
+    promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc, 
+  data = final_data_with_store
 )
 
 fit_trend_competitor_promo2 <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc, data = final_data_with_store
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + month + 
+    promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | 
+    store_code_uc, data = final_data_with_store
 )
 
 fit_month_FE_competitor_promo2 <- feols(
-  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc + year + month, data = final_data_with_store
+  log(1 + quantity_Tide) ~ log(price_Tide) + log(price_Gain) + promotion_Tide + 
+    promotion_Gain + promotion_ArmHammer + promotion_Purex | store_code_uc + 
+    year + month, data = final_data_with_store
 )
 
-etable(fit_base_competitor_promo2, fit_store_FE_competitor_promo2, fit_trend_competitor_promo2, fit_month_FE_competitor_promo2)
+etable(fit_base_competitor_promo2, fit_store_FE_competitor_promo2, 
+       fit_trend_competitor_promo2, fit_month_FE_competitor_promo2)
 
 ```
 
