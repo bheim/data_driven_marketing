@@ -662,7 +662,7 @@ fit_trend_competitor_promo2 <- feols(
 )
 
 fit_month_FE_competitor_promo2 <- feols(
-  log(1 + quantity_Gain) ~ log(price_Gain) + log(price_Tide) + promotion_Gain + promotion_Tide + promotion_ArmHammer + promotion_Purex| store_code_uc + year + month,
+  log(1 + quantity_Gain) ~ log(price_Gain) + log(price_Tide) + log(price_Purex) + log(price_ArmHammer)+ promotion_Gain + promotion_Tide + promotion_ArmHammer + promotion_Purex| store_code_uc + year + month,
   data = final_data_with_store
 )
 
