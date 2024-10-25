@@ -660,6 +660,8 @@ fit_month_FE_competitor_promo2 <- feols(
   data = final_data_with_store
 )
 
+fit_Gain = fit_month_FE_competitor_promo2
+
 etable(fit_base_competitor_promo, fit_store_FE_competitor_promo, fit_trend_competitor_promo, fit_month_FE_competitor_promo2)
 ```
 *Briefly comment on the estimates, as you did before with Tide.*
