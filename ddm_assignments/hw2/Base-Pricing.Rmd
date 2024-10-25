@@ -537,11 +537,11 @@ With the exception of the fit_base model, all other models are generally the sam
 
 *Summarize and comment on the estimation results. Was it necessary to control for store fixed effects, time trends/fixed effects, as well as competitor prices and promotions? What do we learn from the magnitudes of the own and cross-price elasticities?*
 
-The above estimation results highlight the importance of incorporating store fixed effects, time trends, competitor prices, and promotions to accurately model the demand for Tide. First, by including store fixed effects, the model output showed in significant improvement in performance, as reflected in the notable increase in R-squared values. Without controlling for these fixed effects, the estimated own and cross-price elasticities would be biased, as demonstrated by the shift in the cross-price elasticity between Tide and Gain once store-level differences were accounted for, and could suggest that Tide and Gain are substitutes in certain markets.
+In the base model, Tide’s own-price elasticity is quite large, with a coefficient of -7.47, indicating that a 1% increase in Tide's price would result in a 7.47% decrease in demand. However, after including store fixed effects, the magnitude of this elasticity decreases to -5.61, suggesting that the initial model without controls overestimated Tide's price sensitivity by failing to account for unobserved differences across stores. The R-squared value also jumps from 0.496 in the base model to 0.846, which demonstrates the significant improvement in model fit when store-specific factors are considered.
 
-Also, using time trends and fixed effects, such as month and year controls, only marginally improved the model's fit, capturing the effects of seasonality, for example. While these time controls contributed to a more comprehensive model, their impact on the core elasticity estimates was relatively minor -- suggesting that store-specific factors are much more critical to understanding consumer behavior.
+Time trends and month fixed effects did not have much of an impact on the overall results. After introducing a month trend, the price elasticity remains at -5.61, and the inclusion of fixed effects for each year and month leads to a slight decrease in price elasticity to -5.65. The R-squared improves marginally to 0.851, indicating that time trends capture some of the seasonality in Tide's demand, but store fixed effects remain the most important control.
 
-Finally, competitor prices and promotions also played a crucial role in accurately estimating demand. Tide’s own-price elasticity remained significant across all models, showing a high degree of price sensitivity. However, the magnitude of this sensitivity was reduced when promotions were included, indicating that promotions mitigate the negative impact of price increases. Tide’s promotions, in particular, had a substantial positive effect on sales, driving increases in demand ranging from 34% to 42%. On the other hand, competitor promotions—particularly from Gain—had a negative effect on Tide’s sales.
+Lastly, the introduction of Tide’s promotional activities further improves the model’s explanatory power, with the R-squared rising to 0.857. The own-price elasticity decreases further to -4.08, indicating that promotions significantly mitigate the negative impact of price increases. Promotions for Tide have a strong and positive effect on sales, increasing demand by approximately 36.65%. This confirms that promotions are a major driver of Tide's demand and should be accounted for when estimating price sensitivity.
 
 \bigskip
 
@@ -641,8 +641,7 @@ fit_month_FE_competitor_promo <- feols(
 
 etable(fit_base_competitor_promo, fit_store_FE_competitor_promo, fit_trend_competitor_promo, fit_month_FE_competitor_promo)
 ```
-```{r}
-#Gain
+```{r, promo, all brands}
 
 fit_base_competitor_promo2 <- feols(
   log(1 + quantity_Gain) ~ log(price_Gain) + log(price_Tide) + promotion_Gain + promotion_Tide + promotion_ArmHammer + promotion_Purex, data = final_data_with_store
@@ -664,6 +663,12 @@ fit_month_FE_competitor_promo2 <- feols(
 etable(fit_base_competitor_promo, fit_store_FE_competitor_promo, fit_trend_competitor_promo, fit_month_FE_competitor_promo2)
 ```
 *Briefly comment on the estimates, as you did before with Tide.*
+
+The above analysis reveals a lot of the information about demand dynamics for Gain, especially the effects of its own price, competitor prices, and promotional activities. Initially, the base model suggests that Gain exhibits a strong own-price elasticity, with a 1% increase in price leading to a 9.54% decrease in demand. However, this sensitivity is notably reduced once store fixed effects are introduced, where the elasticity drops to -5.06%. This reduction indicates that the initial model overestimated price sensitivity by not accounting for the difference between stores. Additionally, the introduction of store fixed effects reveals a positive cross-price elasticity with Tide, suggesting that the two brands behave as substitutes after accounting for differences across stores. 
+
+Promotional activities were also shown to play a substantial role in influencing demand. Interestingly, the base model showed a negative coefficient for promotion_Gain, which implied that promotions were ineffective or potentially cannibalizing future sales. However, once store-specific effects were controlled for, the promotion effect turned strongly positive, with Gain's promotion coefficient being 0.697 -- linked to an increase in sales. This shift emphasizes the importance of accounting for local market conditions when analyzing promotional effectiveness. Promotions by competing brands, such as Tide and ArmHammer, were found to have positive spillover effects on Gain's demand, indicating that competitive promotions may enhance overall consumer awareness and drive sales across brands.
+
+Finally, the inclusion of time trends and fixed effects for months and years provided further refinement of the model, but the core findings remained consistent. Gain’s own-price elasticity remained high, though slightly reduced, and the positive cross-price elasticity with Tide continued, which confirmed the substitutability of these two brands. The strong and consistent impact of promotional activities was further reinforced, with promotions for Gain, as well as its competitors, significantly boosting demand.
 
 ...
 
