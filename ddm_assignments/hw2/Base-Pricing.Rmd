@@ -684,6 +684,7 @@ The goal is to fine-tune prices jointly for Tide and Gain. We hence use the esti
 To predict profits, let's only retain data for one year, 2013:
 
 ```{r}
+move[,year := year(week_end)]
 move_predict = move[year == 2013]
 ```
 
@@ -695,8 +696,11 @@ Although we have excellent demand data, we do not know the production costs of t
 gross_margin  = 0.35
 retail_margin = 0.18
 
-cost_Tide = (1-gross_margin)*(1-retail_margin)*mean(move_predict$price_Tide)
-cost_Gain = (1-gross_margin)*(1-retail_margin)*mean(move_predict$price_Gain)
+price_Tide = move_predict$price[move_predict$product_id == 653791]
+price_Gain = move_predict$price[move_predict$product_id == 557775]
+
+cost_Tide = (1-gross_margin)*(1-retail_margin)*mean(price_Tide, na.rm = TRUE)
+cost_Gain = (1-gross_margin)*(1-retail_margin)*mean(price_Gain, na.rm = TRUE)
 ```
 
 As prices are measured in dollars per ounce, these marginal costs are also per ounce.
@@ -725,11 +729,28 @@ Inspect the resulting table. The `profit` column will allow us to store the pred
 \bigskip
 
 Now we are ready to iterate over each row in `profit_DT` and evaluate the total product-line profits of Tide and Gain for the corresponding percentage price changes. You can perform this iteration with a simple for-loop:
-
-```{r, eval = FALSE}
+```{r}
+avg_price_Tide <- mean(move_predict$price[move_predict$product_id == 653791], na.rm = TRUE)
+avg_price_Gain <- mean(move_predict$price[move_predict$product_id == 557775], na.rm = TRUE)
 for (i in 1:nrow(profit_DT)) {
    # Perform profit calculations for the price changes indicated in row i of the profit_DT table
+   new_price_Tide = avg_price_Tide * (1 + profit_DT$delta_Tide[i])
+   new_price_Gain = avg_price_Gain * (1 + profit_DT$delta_Gain[i])
+   move_predict[product_id == 653791, price := new_price_Tide]
+   move_predict[product_id == 557775, price := new_price_Gain]
+   predicted_quantity_Tide <- exp(coef(fit_Tide)[1] + coef(fit_Tide)[2] * log(new_price_Tide)) - 1
+   predicted_quantity_Gain <- exp(coef(fit_Gain)[1] + coef(fit_Gain)[2] * log(new_price_Gain)) - 1
+   revenue_Tide = new_price_Tide * predicted_quantity_Tide
+   revenue_Gain = new_price_Gain * predicted_quantity_Gain
+   total_cost_Tide = cost_Tide * predicted_quantity_Tide
+   total_cost_Gain = cost_Gain * predicted_quantity_Gain
+   
+   total_profit_Tide = revenue_Tide - total_cost_Tide
+   total_profit_Gain = revenue_Gain - total_cost_Gain
+   
+   profit_DT$profit[i] <- total_profit_Tide + total_profit_Gain
 }
+print(profit_DT)
 ```
 
 \medskip
