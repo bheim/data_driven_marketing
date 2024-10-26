@@ -768,7 +768,8 @@ We will consider all possible combinations of price changes for Tide and Gain. T
 L = length(percentage_delta)
 profit_DT = data.table(delta_Tide = rep(percentage_delta, each = L),
                        delta_Gain = rep(percentage_delta, times = L),
-                       profit     = rep(0, times = L*L))
+                       profit     = rep(0, times = L),
+                       profit_ratio = rep(0, times = L))
 ```
 
 Inspect the resulting table. The `profit` column will allow us to store the predicted profits.
@@ -777,8 +778,22 @@ Inspect the resulting table. The `profit` column will allow us to store the pred
 
 Now we are ready to iterate over each row in `profit_DT` and evaluate the total product-line profits of Tide and Gain for the corresponding percentage price changes. You can perform this iteration with a simple for-loop:
 
+
+\medskip
+
+Some hints:
+
+- Before you start the loop, store the original price levels of Tide and Gain.
+- Update the price columns in `move_predict` and then predict demand.
+- Calculate total profits at the new price levels for both brands and then store the total profit from Tide and Gain in `profit_DT`.
+
+\medskip
+
+Show a table of profits in levels and in ratios relative to the baseline profit at current price levels, in order to assess the percent profit differences resulting from the contemplated price changes.
+
 ```{r}
 original_Prices <- final_data_with_store[, c("price_Tide", "price_Gain")]
+base_Line_Profit = sum(final_data_with_store$price_Tide * final_data_with_store$quantity_Tide) + sum(final_data_with_store$price_Gain * final_data_with_store$quantity_Gain)
 ```
 
 
@@ -796,21 +811,11 @@ for (i in 1:nrow(profit_DT)) {
    total_profit_Gain = sum(final_data_with_store$price_Gain * final_data_with_store$quantity_Gain)
    
    profit_DT$profit[i] = total_profit_Tide + total_profit_Gain
+   profit_DT$profit_ratio[i] = profit_DT$profit[i] / base_Line_Profit;
 }
 print(profit_DT)
 ```
 
-\medskip
-
-Some hints:
-
-- Before you start the loop, store the original price levels of Tide and Gain.
-- Update the price columns in `move_predict` and then predict demand.
-- Calculate total profits at the new price levels for both brands and then store the total profit from Tide and Gain in `profit_DT`.
-
-\medskip
-
-Show a table of profits in levels and in ratios relative to the baseline profit at current price levels, in order to assess the percent profit differences resulting from the contemplated price changes.
 
 \bigskip
 
