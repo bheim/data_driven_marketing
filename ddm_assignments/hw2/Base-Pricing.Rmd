@@ -816,4 +816,5 @@ Show a table of profits in levels and in ratios relative to the baseline profit 
 
 *Discuss the profitability predictions and how prices should be changed, if at all. How do you reconcile the recommended price changes with the own-price elasticity estimates?*
 
+The profitability predictions seen in the table above show that the greatest profits occur when both Tide and Gain are discounted by 5%, with overall projected profits decreasing as prices rise. Purely off of this data, Proctor&Gamble should consider lowering the prices of their products to maximize profits. However, previous analysis showed that customer demand is not overly reactive to permanent price changes, but are much more elastic to promotions. These two seemingly contradictory points could potentially be reconciled by Proctor&Gamble by increasing the frequency of promotions, but decreasing the amount by which products are discounted, as the demand-boosting affects of running a "promotion" could still be present.
 
