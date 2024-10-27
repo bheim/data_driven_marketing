@@ -51,12 +51,16 @@ We first combine store-level sales data from the Nielsen RMS scanner data set wi
 Data location:
 
 ```{r}
-data_folder = "C:/Users/gcompiani/Dropbox/Teaching/37105/Assignments/04 Advertising-Effects/Data"
+data_folder = "data"
 ```
 
 \bigskip
 
 The table `brands_DT` in the file `Brands_a3.RData` provides information on the available product categories (product modules) and brands, including the "focal" brands for which we may estimate advertising effects.
+
+```{r}
+brands = load(paste0(data_folder, "/Brands_a3.RData"))
+```
 
 \medskip
 
@@ -79,16 +83,20 @@ selected_brand  = 621727
 \newpage
 
 
-
-
-# Data preparation
+# 3 Data preparation
 
 To prepare and build the data for the main analysis, load the brand and store meta-data in `Brands_a3.RData` and `stores_dma.RData`, the RMS store-level scanner (movement) data, and the Nielsen Ad Intel DMA-level TV advertising data. The scanner data and advertising data are named according to the product module, such as `move_8412.RData` and `adv_8412.RData`.
 
 Both the RMS scanner data and the Ad Intel advertising data include information for the top four brands in the category (product module). To make our analysis computationally more manageable we will not distinguish among all individual competing brands, but instead we will aggregate all competitors into one single brand.
 
+```{r}
+brands = load(paste0(data_folder, "/Brands_a3.RData"))
+stores = load(paste0(data_folder, "/stores_dma.RData"))
+move_data = load(paste0(data_folder, "/move_8412.RData"))
+advertising_data = load(paste0(data_folder, "/adv_8412.RData"))
+```
 
-## RMS scanner data (`move`)
+## 3.1 RMS scanner data (`move`)
 
 Let us start manipulating the `move' dataset.
 
@@ -98,14 +106,54 @@ Create the variable `brand_name` that we will use to distinguish between the own
 
 We need to aggregate the data for each store/week observation, separately for the `own` and `comp` data. To aggregate prices and promotions we can take the simple arithmetic `mean` over all competitor brands (a weighted mean may be preferable but is not necessary in this analysis where prices and promotions largely serve as controls, not as the main marketing mix variables of interest). Aggregate quantities can be obtained as the `sum` over brand-level quantities.
 
+```{r}
+#Step 1: Renaming (use set names)
+#Step 1a: Units -> Quantity 
+#Step 1b: promo_percentage -> promotion
+library(data.table) 
+setnames(move, old = "units", new = "quantity", skip_absent=TRUE)
+setnames(move, old = "promo_percentage", new = "promotion", skip_absent=TRUE)
+```
+
+```{r}
+#Step 2: Identifying 'own' (Prilosec) vs. 'comp' (non-Prilosec)
+move$brand_name = ifelse(move$brand_code_uc == selected_brand, "own", "comp")
+```
+
+```{r}
+#Step 3: Aggregating the data for each store/observation  
+#For 'comp'
+comp_data = move[move$brand_name == "comp"]
+comp_price_mean = mean(comp_data$price, na.rm = TRUE)
+comp_promotions_mean = mean(comp_data$promotion, na.rm = TRUE)
+
+#For 'own'
+own_data = move[move$brand_name == "own"]
+own_price_mean = mean(own_data$price, na.rm = TRUE)
+own_promotions_mean = mean(own_data$promotion, na.rm = TRUE)
+
+#Comparison between 'own' and 'comp'
+comp_price_mean
+comp_promotions_mean 
+own_price_mean
+own_promotions_mean
+```
+
 \bigskip
 
 Later, when we merge the RMS scanner data with the Ad Intel advertising data, we need a common key between the two data sets. This key will be provided by the DMA code and the date. Hence, we need to merge the `dma_code` found in the `stores` table with the RMS movement data.
 
 Now merge the `dma_code` with the movement data.
 
+```{r}
+#Merge stores_dma w/move
+#Can you check this one because I only see one dma value when I merge both together
+dma_stores_merge = merge(move, stores_dma, by = "store_code_uc", all = FALSE)
+print(dma_stores_merge)
+```
 
-## Ad Intel advertising data (`adv_DT`)
+
+## 3.2 Ad Intel advertising data (`adv_DT`)
 
 The table `adv_DT` contains information on brand-level GRPs (gross rating points) for each DMA/week combination. The original data are more disaggregated, and include individual occurrences on a specific date and at a specific time and the corresponding number of impressions. `adv_DT` is based on the original data, aggregated at the DMA/week level.
 
@@ -163,13 +211,54 @@ weeks     = seq(from = min(adv_DT$week_end), to = max(adv_DT$week_end), by = "we
 
 Now perform the cross join and set missing values to 0.
 
+```{r}
+#Perfoming Cross Join (Double Check)
+library(data.table)
+setDT(adv_DT)
+complete_set = CJ(brand_code_uc = brands, dma_code = dma_codes, week_end = weeks)
+filled_DT = complete_set[adv_DT, on = .(brand_code_uc, dma_code, week_end)]
+filled_DT[is.na(filled_DT)] = 0
+print(filled_DT)
+```
+
+
 \bigskip
 
 Create own and competitor names, and then aggregate the data at the DMA/week level, similar to what we did with the RMS scanner data. In particular, aggregate based on the sum of GRPs (separately for `grp_direct` and `grp_indirect`).
 
+```{r}
+#Locating own and comps within advertising datatable...
+selected_brand  = 621727
+adv_DT[, brand_type := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "comp")]
+```
+
+```{r}
+#For 'comp'
+competitor_data = adv_DT[adv_DT$brand_type == "comp"]
+comp_direct_sum = sum(competitor_data$grp_direct)
+comp_indirect_sum = sum(competitor_data$grp_indirect)
+
+#For 'own'
+owner_data = adv_DT[adv_DT$brand_type == "own"]
+owner_direct_mean = sum(owner_data$grp_direct)
+owner_indirect_mean = sum(owner_data$grp_indirect)
+
+#Comparison between 'own' and 'comp'
+comp_direct_sum
+comp_indirect_sum 
+owner_direct_mean
+owner_indirect_mean
+```
+
 \bigskip
 
 At this stage we need to decide if we want to measure GRPs using only `grp_direct` or also including `grp_indirect`. I propose to take the broader measure, and sum the GRPs from the two variables to create a combined `grp` measure. You can later check if your results are robust if you use `grp_direct` only (this robustness analysis is optional).
+
+```{r}
+#Direct & Indirect GRPs
+grp_comp = comp_direct_sum + comp_indirect_sum 
+grp_owner = owner_direct_mean + owner_indirect_mean
+```
 
 *Note*: In the Antacids category, `grp_indirect` only contains the value 0 and is therefore not relevant. However, if you work with the data in the other categories, `grp_indirect` contains non-zero values.
 
