@@ -1,6 +1,6 @@
 ---
 title: "Advertising Effects"
-author: "Giovanni Compiani"
+author: "Ben Heim, Marcell Milo-Sidlo, Pierre Chan, Julia Luo, Alicia Soosai"
 output:
   pdf_document:
     number_sections: yes
@@ -59,7 +59,7 @@ data_folder = "data"
 The table `brands_DT` in the file `Brands_a3.RData` provides information on the available product categories (product modules) and brands, including the "focal" brands for which we may estimate advertising effects.
 
 ```{r}
-brands = load(paste0(data_folder, "/Brands_a3.RData"))
+brands = load(paste0(data_folder, ""/Brands_a3.RData""))
 ```
 
 \medskip
