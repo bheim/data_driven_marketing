@@ -51,7 +51,7 @@ We first combine store-level sales data from the Nielsen RMS scanner data set wi
 Data location:
 
 ```{r}
-data_folder = "data"
+data_folder = "~/Desktop/data_driven_marketing/ddm_assignments/hw3/data"
 ```
 
 \bigskip
@@ -59,7 +59,7 @@ data_folder = "data"
 The table `brands_DT` in the file `Brands_a3.RData` provides information on the available product categories (product modules) and brands, including the "focal" brands for which we may estimate advertising effects.
 
 ```{r}
-brands = load(paste0(data_folder, ""/Brands_a3.RData""))
+brands = load(paste0(data_folder, "/Brands_a3.RData"))
 ```
 
 \medskip
@@ -92,7 +92,7 @@ Both the RMS scanner data and the Ad Intel advertising data include information 
 ```{r}
 brands = load(paste0(data_folder, "/Brands_a3.RData"))
 stores = load(paste0(data_folder, "/stores_dma.RData"))
-move_data = load(paste0(data_folder, "/move_8412.RData"))
+move_data = load(paste0(data_folder, "/adv_8412.RData"))
 advertising_data = load(paste0(data_folder, "/adv_8412.RData"))
 ```
 
