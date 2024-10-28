@@ -768,7 +768,8 @@ We will consider all possible combinations of price changes for Tide and Gain. T
 L = length(percentage_delta)
 profit_DT = data.table(delta_Tide = rep(percentage_delta, each = L),
                        delta_Gain = rep(percentage_delta, times = L),
-                       profit     = rep(0, times = L*L))
+                       profit     = rep(0, times = L),
+                       profit_ratio = rep(0, times = L))
 ```
 
 Inspect the resulting table. The `profit` column will allow us to store the predicted profits.
@@ -777,8 +778,22 @@ Inspect the resulting table. The `profit` column will allow us to store the pred
 
 Now we are ready to iterate over each row in `profit_DT` and evaluate the total product-line profits of Tide and Gain for the corresponding percentage price changes. You can perform this iteration with a simple for-loop:
 
+
+\medskip
+
+Some hints:
+
+- Before you start the loop, store the original price levels of Tide and Gain.
+- Update the price columns in `move_predict` and then predict demand.
+- Calculate total profits at the new price levels for both brands and then store the total profit from Tide and Gain in `profit_DT`.
+
+\medskip
+
+Show a table of profits in levels and in ratios relative to the baseline profit at current price levels, in order to assess the percent profit differences resulting from the contemplated price changes.
+
 ```{r}
 original_Prices <- final_data_with_store[, c("price_Tide", "price_Gain")]
+base_Line_Profit = sum(final_data_with_store$price_Tide * final_data_with_store$quantity_Tide) + sum(final_data_with_store$price_Gain * final_data_with_store$quantity_Gain)
 ```
 
 
@@ -796,29 +811,19 @@ for (i in 1:nrow(profit_DT)) {
    total_profit_Gain = sum(final_data_with_store$price_Gain * final_data_with_store$quantity_Gain)
    
    profit_DT$profit[i] = total_profit_Tide + total_profit_Gain
+   profit_DT$profit_ratio[i] = profit_DT$profit[i] / base_Line_Profit;
 }
 print(profit_DT)
 ```
 
-\medskip
-
-Some hints:
-
-- Before you start the loop, store the original price levels of Tide and Gain.
-- Update the price columns in `move_predict` and then predict demand.
-- Calculate total profits at the new price levels for both brands and then store the total profit from Tide and Gain in `profit_DT`.
-
-\medskip
-
-Show a table of profits in levels and in ratios relative to the baseline profit at current price levels, in order to assess the percent profit differences resulting from the contemplated price changes.
 
 \bigskip
 
 *Discuss the profitability predictions and how prices should be changed, if at all. How do you reconcile the recommended price changes with the own-price elasticity estimates?*
 
-The profitability analysis results show that specific price adjustments for Tide and Gain can significantly impact total profit. Ultimately, the most profitable scenarios tend to involve moderate price increases for both brands, especially with a 5% price increase for Tide and a 2.5% increase for Gain. This combination strikes a balance between raising revenue and minimizing any potential drop in demand; conversely, price decreases, particularly reductions for both Tide and Gain, generally lead to lower profit outcomes. For instance, a -5% adjustment in prices for both brands results in some of the lowest profit figures in the analysis.
+The profitability analysis results show that specific price adjustments for Tide and Gain can significantly impact total profit. Ultimately, the most profitable scenarios tend to involve moderate price decreases for both brands, specifically with a 5% price decrease for both Tide and Gain. This change in price effectively captures an increase in demand, driving up total profitability as the increased demand sufficiently offsets a decrease in profit per unit.
 
-Based on the results, the recommended strategy is to increase prices moderately rather than reducing them. Specifically, a 5% increase for Tide and a 2.5% increase for Gain yields the best profitability outcome among the tested combinations, and that a cautious upward adjustment in prices can enhance profit margins without causing a significant loss in demand. By avoiding price reductions, the brands can maintain profitability without sacrificing revenue through price cuts that fail to drive sufficient demand increases to offset the lower prices.
+This stands somewhat in contrast to previous findings that own-price elasticity estimates for Tide and Gain likely indicate relatively inelastic demand. With inelastic demand, the quantity demanded does not increase sharply when prices decrease, which is not what we see in the model above. Previous findings do indicate, however, that promotions do in fact drive up sales, pointing towards a more elastic demand curve.
 
-Furthermore, the own-price elasticity estimates for Tide and Gain likely indicate relatively inelastic demand. With inelastic demand, the quantity demanded does not decrease sharply when prices increase. Therefore, the modest price increases shown to maximize profits align well with inelastic demand characteristics. If the demand were highly elastic, higher prices would likely have led to lower profits due to a substantial decline in quantity sold. Hence, the suggested price adjustments leverage the inelastic nature of demand for Tide and Gain, allowing for higher profits through controlled price increases that do not heavily impact sales volume.
+With these findings in mind Proctor&Gamble could potentially optimize its sales strategy by conducting more frequent promotions with lower reductions in price. This could potentially capture the demand driving effects of a promotion being in place, while also maximizing the revenue per product.
 
