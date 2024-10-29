@@ -265,7 +265,7 @@ grp_owner = owner_direct_mean + owner_indirect_mean
 \newpage
 
 
-## Calculate adstock/goodwill
+## 3.3 Calculate adstock/goodwill
 
 Advertising is likely to have long-run effects on demand. Hence, we will calculate adstock or goodwill variables for own and competitor advertising. We will use the following, widely-used adstock specification ($a_t$ is advertising in period $t$):
 $$g_{t} = \sum_{l=0}^{L}\delta^{l}\log(1+a_{t-l}) = \log(1+a_{t})+\delta \log(1+a_{t-1})+\dots+\delta^{L}\log(1+a_{t-L})$$
@@ -293,11 +293,21 @@ tail(geom_weights)
 
 Now we can calculate the adstock variable using the `roll_sum` function in the `RcppRoll` package.
 
-```{r, eval = FALSE}
+```{r}
+adv_DT[, brand_name := ifelse(brand_code_uc == selected_brand, "own", "comp")]
+
+adv_DT[, grp := grp_direct + grp_indirect]
+```
+
+```{r, eval=FALSE}
 setkey(adv_DT, brand_name, dma_code, week_end)
-adv_DT[, adstock := roll_sum(log(1+grp), n = N_lags+1, weights = geom_weights,
-                             normalize = FALSE, align = "right",  fill = NA),
-        by = .(brand_name, dma_code)]
+
+adv_DT[, adstock := roll_sum(log(1 + grp), 
+                             n = N_lags + 1, 
+                             weights = geom_weights,
+                             normalize = FALSE, 
+                             align = "right", fill = NA),
+       by = .(brand_name, dma_code)]
 ```
 
 \medskip
