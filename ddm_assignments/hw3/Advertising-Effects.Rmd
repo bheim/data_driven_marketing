@@ -359,28 +359,31 @@ Even though the `weightedSum` function is fast, the speed difference with respec
 
 Lesson: Instead of reinventing the wheel, spend a few minutes searching the Internet to see if someone has already written a package that solves your coding problems.
  
-\newpage
+\newpage 
 
 
 ## Merge scanner and advertising data
 
 Merge (join) the advertising data with the scanner data based on brand name, DMA code, and week.
-
-
+```{r, eval=FALSE}
+merged_data <- merge(move_data, advertising_data, by = c("brand_name", "dma_code", "week_end"))
+```
 ## Reshape the data
 
 Use `dcast` to reshape the data from long to wide format. The store code and week variable are the main row identifiers. Quantity, price, promotion, and adstock are the column variables.
-
-
 If you inspect the data you will see many missing `adstock` values, because the adstock variable is not defined for the first `N_lags` weeks in the data. To free memory, remove all missing values from `move` (`complete.cases`).
+```{r}
+wide_data <- dcast(merged_data, store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
+clean_merged_data <- wide_data[complete.cases(wide_data), ]
 
-
+```
 ## Time fixed effects
-
 Create an index for each month/year combination in the data using the following code:
 
 ```{r, eval = FALSE}
-move[, month_index := 12*(year(week_end) - 2011) + month(week_end)]
+move[, week_end := as.Date(week_end, format = "%Y-%m-%d")]
+move[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + as.integer(format(week_end, "%m"))]
+head(move[, .(week_end, month_index)]) #sanity check
 ```
 
 
