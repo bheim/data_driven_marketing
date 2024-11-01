@@ -148,8 +148,8 @@ Now merge the `dma_code` with the movement data.
 ```{r}
 #Merge stores_dma w/move
 #Can you check this one because I only see one dma value when I merge both together
-dma_stores_merge = merge(move, stores_dma, by = "store_code_uc", all = FALSE)
-print(dma_stores_merge)
+move = merge(move, stores_dma, by = "store_code_uc", all = FALSE)
+print(move)
 ```
 
 
@@ -203,7 +203,7 @@ DT
 
 Use this technique to expand the advertising data in `adv_DT`, using a cross join along along all `brands`, `dma_codes`, and `weeks`:
 
-```{r, eval = FALSE}
+```{r}
 brands    = unique(adv_DT$brand_code_uc)
 dma_codes = unique(adv_DT$dma_code)
 weeks     = seq(from = min(adv_DT$week_end), to = max(adv_DT$week_end), by = "week")
@@ -229,7 +229,7 @@ Create own and competitor names, and then aggregate the data at the DMA/week lev
 ```{r}
 #Locating own and comps within advertising datatable...
 selected_brand  = 621727
-adv_DT[, brand_type := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "comp")]
+adv_DT[, brand_name := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "comp")]
 ```
 
 ```{r}
@@ -294,12 +294,10 @@ tail(geom_weights)
 Now we can calculate the adstock variable using the `roll_sum` function in the `RcppRoll` package.
 
 ```{r}
-adv_DT[, brand_name := ifelse(brand_code_uc == selected_brand, "own", "comp")]
-
 adv_DT[, grp := grp_direct + grp_indirect]
 ```
 
-```{r, eval=FALSE}
+```{r}
 setkey(adv_DT, brand_name, dma_code, week_end)
 
 adv_DT[, adstock := roll_sum(log(1 + grp), 
@@ -336,12 +334,12 @@ weightedSum <- function(x, w) {
 
 Let's compare the execution speed:
 
-```{r, eval = FALSE}
+```{r}
 time_a = system.time(adv_DT[, stock_a := weightedSum(log(1+grp), geom_weights),
                              by = .(brand_name, dma_code)])
 ```
 
-```{r, eval = FALSE}
+```{r}
 time_b = system.time(adv_DT[, stock_b := roll_sum(log(1+grp), n = N_lags+1,
                                                   weights = geom_weights,
                                                   normalize = FALSE,
@@ -351,7 +349,7 @@ time_b = system.time(adv_DT[, stock_b := roll_sum(log(1+grp), n = N_lags+1,
 
 Even though the `weightedSum` function is fast, the speed difference with respect to the optimized code in `RcppRoll` is large.
 
-```{r, eval = FALSE}
+```{r}
 (time_a/time_b)[3]
 ```
 
@@ -365,22 +363,26 @@ Lesson: Instead of reinventing the wheel, spend a few minutes searching the Inte
 ## Merge scanner and advertising data
 
 Merge (join) the advertising data with the scanner data based on brand name, DMA code, and week.
-```{r, eval=FALSE}
-merged_data <- merge(move_data, advertising_data, by = c("brand_name", "dma_code", "week_end"))
+```{r}
+head(move)
+head(adv_DT)
+move <- merge(move, adv_DT, by = c("brand_name", "dma_code", "week_end"))
+head(move)
 ```
 ## Reshape the data
 
 Use `dcast` to reshape the data from long to wide format. The store code and week variable are the main row identifiers. Quantity, price, promotion, and adstock are the column variables.
 If you inspect the data you will see many missing `adstock` values, because the adstock variable is not defined for the first `N_lags` weeks in the data. To free memory, remove all missing values from `move` (`complete.cases`).
 ```{r}
-wide_data <- dcast(merged_data, store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
-clean_merged_data <- wide_data[complete.cases(wide_data), ]
+head(move)
+move <- dcast(move, store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
+move <- wide_data[complete.cases(wide_data), ]
 
 ```
 ## Time fixed effects
 Create an index for each month/year combination in the data using the following code:
 
-```{r, eval = FALSE}
+```{r}
 move[, week_end := as.Date(week_end, format = "%Y-%m-%d")]
 move[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + as.integer(format(week_end, "%m"))]
 head(move[, .(week_end, month_index)]) #sanity check
