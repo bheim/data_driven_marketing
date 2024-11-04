@@ -237,8 +237,7 @@ At this stage we need to decide if we want to measure GRPs using only `grp_direc
 
 ```{r}
 #Direct & Indirect GRPs
-grp_comp = comp_direct_sum + comp_indirect_sum 
-grp_owner = owner_direct_mean + owner_indirect_mean
+adv_DT$grp = adv_DT$grp_direct + adv_DT$grp_indirect
 ```
 
 *Note*: In the Antacids category, `grp_indirect` only contains the value 0 and is therefore not relevant. However, if you work with the data in the other categories, `grp_indirect` contains non-zero values.
@@ -346,7 +345,8 @@ Lesson: Instead of reinventing the wheel, spend a few minutes searching the Inte
 Merge (join) the advertising data with the scanner data based on brand name, DMA code, and week.
 ```{r}
 head(move)
-head(adv_DT)
+adv_DT[, stock_a := NULL]
+adv_DT[, stock_b := NULL]
 move <- merge(move, adv_DT, by = c("brand_name", "dma_code", "week_end"))
 head(move)
 ```
@@ -355,10 +355,8 @@ head(move)
 Use `dcast` to reshape the data from long to wide format. The store code and week variable are the main row identifiers. Quantity, price, promotion, and adstock are the column variables.
 If you inspect the data you will see many missing `adstock` values, because the adstock variable is not defined for the first `N_lags` weeks in the data. To free memory, remove all missing values from `move` (`complete.cases`).
 ```{r}
-head(move)
-move <- dcast(move, store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
-move <- wide_data[complete.cases(wide_data), ]
-
+wide_data <- dcast(move, dma_code + store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
+wide_data <- wide_data[complete.cases(wide_data), ]
 ```
 ## Time fixed effects
 Create an index for each month/year combination in the data using the following code:
@@ -381,11 +379,64 @@ head(move[, .(week_end, month_index)]) #sanity check
 
 We now take a look at the advertising data. First, pick a DMA. You can easily get a list of all DMA names and codes from the `stores` table. I picked `"CHICAGO IL"`, which corresponds to `dma_code` 602. Then plot the time-series of weekly GRPs for your chosen market, separately for the own and competitor brand.
 
+
+```{r}
+chosen_code = 506
+move_filtered <- move[dma_code == chosen_code]
+head(move_filtered)
+
+# Aggregate grp by week_end and brand
+move_filtered <- move_filtered[, .(
+  grp = mean(grp, na.rm = TRUE)
+), by = .(week_end, brand_name)]
+
+```
 Note: I suggest you create a facet plot to display the time-series of GRPs for the two brands. Use the `facet_grid` or `facet_wrap` layer as explained in the ggplot2 guide (see "More on facetting").
+```{r}
+library(ggplot2)
+
+# Create the facet plot
+facet_labels <- c("own" = "Own GRP Over Time", "comp" = "Competitor GRP Over Time")
+
+ggplot(move_filtered, aes(x = week_end, y = grp)) +
+  geom_line(color = "blue") +
+  facet_wrap(~ brand_name, ncol = 1, scales = "free_y",
+             labeller = labeller(brand_name = facet_labels)) +
+  labs(
+    title = paste("Weekly GRP for DMA", chosen_code),
+    x = "Week Ending",
+    y = "GRP"
+  ) +
+  theme_minimal()
+```
 
 ## Overall advertising variation
 
 Create a new variable **at the DMA-level**, `normalized_grp`, defined as `100*grp/mean(grp)`. This variable captures the percentage deviation of the GRP observations relative to the DMA-level mean of advertising. Plot a histogram of `normalized_grp`.
+```{r}
+mean_grp_dma_brand <- move[, .(mean_grp = mean(grp, na.rm = TRUE)), by = .(dma_code, brand_name)]
+
+# Step 2: Merge the mean back into the 'move' data table and calculate 'normalized_grp'
+move <- merge(move, mean_grp_dma_brand, by = c("dma_code", "brand_name"), all.x = TRUE)
+move[, normalized_grp := 100 * grp / mean_grp]
+
+lower_limit <- 0
+upper_limit <- 300
+
+# Step 3: Plot the histogram of 'normalized_grp' by brand
+ggplot(move, aes(x = normalized_grp)) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "black", alpha = 0.7) +
+  facet_wrap(~ brand_name, ncol = 1, scales = "free_y") +
+  coord_cartesian(xlim = c(lower_limit, upper_limit)) +
+  labs(
+    title = "Histogram of Normalized GRP by Brand (Zoomed In)",
+    x = "Normalized GRP (%)",
+    y = "Frequency"
+  ) +
+  theme_minimal()
+```
+
+
 
 \medskip
 
