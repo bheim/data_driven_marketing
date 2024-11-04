@@ -118,25 +118,17 @@ setnames(move, old = "promo_percentage", new = "promotion", skip_absent=TRUE)
 ```{r}
 #Step 2: Identifying 'own' (Prilosec) vs. 'comp' (non-Prilosec)
 move$brand_name = ifelse(move$brand_code_uc == selected_brand, "own", "comp")
+colnames(move)
 ```
 
 ```{r}
 #Step 3: Aggregating the data for each store/observation  
 #For 'comp'
-comp_data = move[move$brand_name == "comp"]
-comp_price_mean = mean(comp_data$price, na.rm = TRUE)
-comp_promotions_mean = mean(comp_data$promotion, na.rm = TRUE)
-
-#For 'own'
-own_data = move[move$brand_name == "own"]
-own_price_mean = mean(own_data$price, na.rm = TRUE)
-own_promotions_mean = mean(own_data$promotion, na.rm = TRUE)
-
-#Comparison between 'own' and 'comp'
-comp_price_mean
-comp_promotions_mean 
-own_price_mean
-own_promotions_mean
+move <- move[, .(
+  quantity = sum(quantity, na.rm = TRUE),      # Sum quantities
+  price = mean(price, na.rm = TRUE),           # Mean price
+  promotion = mean(promotion, na.rm = TRUE)    # Mean promotion
+), by = .(store_code_uc, week_end, brand_name)]
 ```
 
 \bigskip
