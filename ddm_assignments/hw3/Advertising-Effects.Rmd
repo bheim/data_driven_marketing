@@ -225,21 +225,10 @@ adv_DT[, brand_name := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "co
 ```
 
 ```{r}
-#For 'comp'
-competitor_data = adv_DT[adv_DT$brand_type == "comp"]
-comp_direct_sum = sum(competitor_data$grp_direct)
-comp_indirect_sum = sum(competitor_data$grp_indirect)
-
-#For 'own'
-owner_data = adv_DT[adv_DT$brand_type == "own"]
-owner_direct_mean = sum(owner_data$grp_direct)
-owner_indirect_mean = sum(owner_data$grp_indirect)
-
-#Comparison between 'own' and 'comp'
-comp_direct_sum
-comp_indirect_sum 
-owner_direct_mean
-owner_indirect_mean
+adv_DT <- adv_DT[, .(
+  grp_direct = sum(grp_direct, na.rm = TRUE),      # Sum of direct GRPs
+  grp_indirect = sum(grp_indirect, na.rm = TRUE)   # Sum of indirect GRPs
+), by = .(dma_code, week_end, brand_name)]
 ```
 
 \bigskip
