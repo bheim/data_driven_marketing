@@ -404,7 +404,7 @@ ggplot(move_filtered, aes(x = week_end, y = grp)) +
              labeller = labeller(brand_name = facet_labels)) +
   labs(
     title = paste("Weekly GRP for DMA", chosen_code),
-    x = "Week Ending",
+    x = "Week End",
     y = "GRP"
   ) +
   theme_minimal()
@@ -420,16 +420,20 @@ mean_grp_dma_brand <- move[, .(mean_grp = mean(grp, na.rm = TRUE)), by = .(dma_c
 move <- merge(move, mean_grp_dma_brand, by = c("dma_code", "brand_name"), all.x = TRUE)
 move[, normalized_grp := 100 * grp / mean_grp]
 
+facet_labels <- c("own" = "Own GRP Ratio by DMA", "comp" = "Competitor GRP Ratio by DMA")
+
+# Set limits to exclude outliers
 lower_limit <- 0
 upper_limit <- 300
 
-# Step 3: Plot the histogram of 'normalized_grp' by brand
+# Plot the histogram using 'move' without modifying it
 ggplot(move, aes(x = normalized_grp)) +
-  geom_histogram(binwidth = 10, fill = "blue", color = "black", alpha = 0.7) +
-  facet_wrap(~ brand_name, ncol = 1, scales = "free_y") +
-  coord_cartesian(xlim = c(lower_limit, upper_limit)) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7, boundary = 0) +
+  facet_wrap(~ brand_name, ncol = 1, scales = "free_y",
+             labeller = as_labeller(facet_labels)) +
+  scale_x_continuous(limits = c(lower_limit, upper_limit)) +  # Or use coord_cartesian()
   labs(
-    title = "Histogram of Normalized GRP by Brand (Zoomed In)",
+    title = "Histogram of Normalized GRP by Brand (Limited Range)",
     x = "Normalized GRP (%)",
     y = "Frequency"
   ) +
