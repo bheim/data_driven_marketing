@@ -362,9 +362,9 @@ wide_data <- wide_data[complete.cases(wide_data), ]
 Create an index for each month/year combination in the data using the following code:
 
 ```{r}
-move[, week_end := as.Date(week_end, format = "%Y-%m-%d")]
-move[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + as.integer(format(week_end, "%m"))]
-head(move[, .(week_end, month_index)]) #sanity check
+wide_data[, week_end := as.Date(week_end, format = "%Y-%m-%d")]
+wide_data[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + as.integer(format(week_end, "%m"))]
+head(wide_data[, .(week_end, month_index)]) #sanity check
 ```
 
 
@@ -462,4 +462,30 @@ Estimate the following specifications:
 3. Like specification 2., but not controlling for time fixed effects.
 
 Combine the results using `etable` and comment on the results.
+
+```{r}
+library(fixest)
+basic_model <- feols(
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp |
+    store_code_uc + month_index,
+  data = wide_data
+)
+
+model_with_adstock <- feols(
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp + adstock_own + adstock_comp |
+    store_code_uc + month_index,
+  data = wide_data
+)
+
+model_with_adstock_no_time <- feols(
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp + adstock_own + adstock_comp |
+    store_code_uc,
+  data = wide_data
+)
+
+etable(basic_model, model_with_adstock, model_with_adstock_no_time)
+
+
+```
+
 
