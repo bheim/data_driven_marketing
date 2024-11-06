@@ -2,11 +2,16 @@
 title: "Base Pricing Analysis and Price Elasticity Estimation"
 author: "Ben Heim, Marcell Milo-Sidlo, Pierre Chan, Julia Luo, Alicia Soosai"
 output:
+  word_document:
+    toc: true
   pdf_document:
-    number_sections: yes
-    toc: yes
+    number_sections: true
+    toc: true
+  html_document:
+    toc: true
+    df_print: paged
 header-includes: \usepackage{booktabs}
-graphics: yes
+graphics: true
 urlcolor: blue
 ---
 ```{r setup, include=FALSE}

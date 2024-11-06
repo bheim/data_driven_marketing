@@ -487,13 +487,15 @@ model_with_adstock_no_time <- feols(
   data = wide_data
 )
 
+
 etable(basic_model, model_with_adstock, model_with_adstock_no_time)
 
 
 ```
 
-Basic_model -> negative effect from own price, positive from competitor, positive effect on our promotion, and much smaller effect on competitor promotion
-Adstock_model_with-time -> positive from our adstock, very minimal negative from competitor
-No_time -> model kinda sucks ass -> negative effect on competitor price increase, negative effect for our own adstock and positive for their adstock.
+The results from the basic model shows predominantly expected results. We see a negative correlation between own price and quantity sold, with a 2.1% decrease in quantity with each percentage point increase in the price of own products. There is a slight positive correlation between competitor price and own quantity sold, with own quantity going up by 0.14% for each percentage point competitors raise their prices. We see a positive correlation between own promotions and quantity, with the dummy variable having a coefficient of 0.8782. Slightly surprisingly, we also see a positive coefficient associated with competitor promotions (0.0346). This could be explained by a phenomenon where competitors' promotions draw some additional attention to own products as well, or causing customers to realize their need for a product within the category.
 
+The results from the adstock model with time fixed-effects show similar results to the basic model. It shows a slightly weaker negative correlation between own price and quantity sold, and a slightly stronger positive correlation between competitors' pricing and own quantity sold. The effects of running promotions is also similar to the basic model, with results showing a large positive effect of own promotions on quantities sold, and a small, but still positive effect of competitors running promotions. The adstock model also includes on the adstock, or the weighted average of current and past advertising, and these coefficients show the effects running an advertising campaign on the quantities sold. We can see that there is a slight positive correlation in own products sold when running an advertising campaign, while during and after a competitor's advertising, we see a decrease in the quantity of our own products sold.
+
+In the model where we do not control for time fixed effects, our results deviate significantly from those in the previous models. While the coefficient on own price is still negative, indicating that an increase in the price of our products leads to a decrease in the number of units sold, the effect of competitors' price also has a negative coefficient. This would mean that an increase in a competing product's price lead to a decrease in sales for our own product as well. This is likely due to the model possibly overestimating the cross-price elasticity when time fixed effects are excluded. The effects of running promotions does not vary much in this model compared to the previous ones, though we do see that the coefficient on competitors' promotions is not statistically significant, indicating that the effect of a competitor running a promotion does not significantly change the sales metrics of our own product. The effect of adstock in this model is the reverse of what we observed in the model containing time fixed effects. Our results show a negative correlation between own advertising efforts and the quantity of own products sold, while it indicates a positive correlation between competitors' ad campaigns and our own products. This logically does not make sense and highlights the importance of including fixed effects into the regression model whenever possible.
 
