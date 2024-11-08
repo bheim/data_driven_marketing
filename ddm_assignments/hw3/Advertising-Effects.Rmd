@@ -202,7 +202,8 @@ Use this technique to expand the advertising data in `adv_DT`, using a cross joi
 ```{r}
 brands    = unique(adv_DT$brand_code_uc)
 dma_codes = unique(adv_DT$dma_code)
-weeks     = seq(from = min(adv_DT$week_end), to = max(adv_DT$week_end), by = "week")
+weeks     = seq(from = min(adv_DT$week_end), to = max(adv_DT$week_end), 
+                by = "week")
 ```
 
 Now perform the cross join and set missing values to 0.
@@ -211,7 +212,8 @@ Now perform the cross join and set missing values to 0.
 #Cross Join
 library(data.table)
 setDT(adv_DT)
-complete_set = CJ(brand_code_uc = brands, dma_code = dma_codes, week_end = weeks)
+complete_set = CJ(brand_code_uc = brands, dma_code = dma_codes, 
+                  week_end = weeks)
 adv_DT = complete_set[adv_DT, on = .(brand_code_uc, dma_code, week_end)]
 adv_DT[is.na(adv_DT)] = 0
 
@@ -226,7 +228,8 @@ Create own and competitor names, and then aggregate the data at the DMA/week lev
 ```{r}
 #Locating own and comps within advertising datatable
 selected_brand  = 621727
-adv_DT[, brand_name := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "comp")]
+adv_DT[, brand_name := ifelse(adv_DT$brand_code_uc == selected_brand, 
+                              "own", "comp")]
 ```
 
 ```{r}
@@ -363,7 +366,8 @@ head(move)
 Use `dcast` to reshape the data from long to wide format. The store code and week variable are the main row identifiers. Quantity, price, promotion, and adstock are the column variables.
 If you inspect the data you will see many missing `adstock` values, because the adstock variable is not defined for the first `N_lags` weeks in the data. To free memory, remove all missing values from `move` (`complete.cases`).
 ```{r}
-wide_data <- dcast(move, dma_code + store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
+wide_data <- dcast(move, dma_code + store_code_uc + week_end ~ brand_name, 
+                   value.var = c("quantity", "price", "promotion", "adstock"))
 wide_data <- wide_data[complete.cases(wide_data), ]
 head(wide_data)
 ```
@@ -372,7 +376,8 @@ Create an index for each month/year combination in the data using the following 
 
 ```{r}
 wide_data[, week_end := as.Date(week_end, format = "%Y-%m-%d")]
-wide_data[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + as.integer(format(week_end, "%m"))]
+wide_data[, month_index := 12 * (as.integer(format(week_end, "%Y")) - 2011) + 
+            as.integer(format(week_end, "%m"))]
 head(wide_data[, .(week_end, month_index)]) #sanity check
 ```
 
@@ -405,7 +410,8 @@ Note: I suggest you create a facet plot to display the time-series of GRPs for t
 library(ggplot2)
 
 # Facet plot
-facet_labels <- c("own" = "Own GRP Over Time", "comp" = "Competitor GRP Over Time")
+facet_labels <- c("own" = "Own GRP Over Time", 
+                  "comp" = "Competitor GRP Over Time")
 
 ggplot(move_filtered, aes(x = week_end, y = grp)) +
   geom_line(color = "blue") +
@@ -425,10 +431,12 @@ Create a new variable **at the DMA-level**, `normalized_grp`, defined as `100*gr
 ```{r}
 mean_grp_dma_brand <- move[, .(mean_grp = mean(grp, na.rm = TRUE)), by = .(dma_code, brand_name)]
 
-move <- merge(move, mean_grp_dma_brand, by = c("dma_code", "brand_name"), all.x = TRUE)
+move <- merge(move, mean_grp_dma_brand, 
+              by = c("dma_code", "brand_name"), all.x = TRUE)
 move[, normalized_grp := 100 * grp / mean_grp]
 
-facet_labels <- c("own" = "Own GRP Ratio by DMA", "comp" = "Competitor GRP Ratio by DMA")
+facet_labels <- c("own" = "Own GRP Ratio by DMA", 
+                  "comp" = "Competitor GRP Ratio by DMA")
 
 # Set limits to exclude outliers
 lower_limit <- 0
@@ -436,7 +444,8 @@ upper_limit <- 300
 
 # Plot the histogram using 'move' without modifying it
 ggplot(move, aes(x = normalized_grp)) +
-  geom_histogram(binwidth = 10, fill = "green", color = "black", alpha = 0.7, boundary = 0) +
+  geom_histogram(binwidth = 10, fill = "green", color = "black",
+                 alpha = 0.7, boundary = 0) +
   facet_wrap(~ brand_name, ncol = 1, scales = "free_y",
              labeller = as_labeller(facet_labels)) +
   scale_x_continuous(limits = c(lower_limit, upper_limit)) +  # Or use coord_cartesian()
@@ -479,19 +488,22 @@ head(wide_data)
 ```{r}
 library(fixest)
 basic_model <- feols(
-  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp |
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + 
+    promotion_comp |
     store_code_uc + month_index,
   data = wide_data
 )
 
 model_with_adstock <- feols(
-  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp + adstock_own + adstock_comp |
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + 
+    promotion_comp + adstock_own + adstock_comp |
     store_code_uc + month_index,
   data = wide_data
 )
 
 model_with_adstock_no_time <- feols(
-  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + promotion_comp + adstock_own + adstock_comp |
+  log(1 + quantity_own) ~ log(price_own) + log(price_comp) + promotion_own + 
+    promotion_comp + adstock_own + adstock_comp |
     store_code_uc,
   data = wide_data
 )
