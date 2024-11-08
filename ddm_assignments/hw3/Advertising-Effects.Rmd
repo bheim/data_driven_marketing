@@ -111,24 +111,29 @@ We need to aggregate the data for each store/week observation, separately for th
 #Step 1a: Units -> Quantity 
 #Step 1b: promo_percentage -> promotion
 library(data.table)
-setnames(move, old = "units", new = "quantity", skip_absent=TRUE)
-setnames(move, old = "promo_percentage", new = "promotion", skip_absent=TRUE)
+setnames(move, old = "units", new = "quantity")
+setnames(move, old = "promo_percentage", new = "promotion")
+
+head(move)
 ```
 
 ```{r}
 #Step 2: Identifying 'own' (Prilosec) vs. 'comp' (non-Prilosec)
 move$brand_name = ifelse(move$brand_code_uc == selected_brand, "own", "comp")
 colnames(move)
+head(move)
 ```
 
 ```{r}
 #Step 3: Aggregating the data for each store/observation  
 #For 'comp'
 move <- move[, .(
-  quantity = sum(quantity, na.rm = TRUE),      # Sum quantities
   price = mean(price, na.rm = TRUE),           # Mean price
-  promotion = mean(promotion, na.rm = TRUE)    # Mean promotion
+  promotion = mean(promotion, na.rm = TRUE),   # Mean promotion
+  quantity = sum(quantity, na.rm = TRUE)      # Sum quantities
 ), by = .(store_code_uc, week_end, brand_name)]
+
+head(move)
 ```
 
 \bigskip
@@ -139,9 +144,8 @@ Now merge the `dma_code` with the movement data.
 
 ```{r}
 #Merge stores_dma w/move
-#Can you check this one because I only see one dma value when I merge both together
 move = merge(move, stores_dma, by = "store_code_uc")
-print(move)
+head(move)
 ```
 
 
@@ -204,12 +208,14 @@ weeks     = seq(from = min(adv_DT$week_end), to = max(adv_DT$week_end), by = "we
 Now perform the cross join and set missing values to 0.
 
 ```{r}
-#Perfoming Cross Join (Double Check)
+#Cross Join
 library(data.table)
 setDT(adv_DT)
 complete_set = CJ(brand_code_uc = brands, dma_code = dma_codes, week_end = weeks)
 adv_DT = complete_set[adv_DT, on = .(brand_code_uc, dma_code, week_end)]
 adv_DT[is.na(adv_DT)] = 0
+
+adv_DT
 ```
 
 
@@ -218,7 +224,7 @@ adv_DT[is.na(adv_DT)] = 0
 Create own and competitor names, and then aggregate the data at the DMA/week level, similar to what we did with the RMS scanner data. In particular, aggregate based on the sum of GRPs (separately for `grp_direct` and `grp_indirect`).
 
 ```{r}
-#Locating own and comps within advertising datatable...
+#Locating own and comps within advertising datatable
 selected_brand  = 621727
 adv_DT[, brand_name := ifelse(adv_DT$brand_code_uc == selected_brand, "own", "comp")]
 ```
@@ -316,6 +322,7 @@ Let's compare the execution speed:
 ```{r}
 time_a = system.time(adv_DT[, stock_a := weightedSum(log(1+grp), geom_weights),
                              by = .(brand_name, dma_code)])
+time_a
 ```
 
 ```{r}
@@ -324,6 +331,8 @@ time_b = system.time(adv_DT[, stock_b := roll_sum(log(1+grp), n = N_lags+1,
                                                   normalize = FALSE,
                                                   align = "right",  fill = NA),
                              by = .(brand_name, dma_code)])
+
+time_b
 ```
 
 Even though the `weightedSum` function is fast, the speed difference with respect to the optimized code in `RcppRoll` is large.
@@ -356,6 +365,7 @@ If you inspect the data you will see many missing `adstock` values, because the 
 ```{r}
 wide_data <- dcast(move, dma_code + store_code_uc + week_end ~ brand_name, value.var = c("quantity", "price", "promotion", "adstock"))
 wide_data <- wide_data[complete.cases(wide_data), ]
+head(wide_data)
 ```
 ## Time fixed effects
 Create an index for each month/year combination in the data using the following code:
@@ -394,7 +404,7 @@ Note: I suggest you create a facet plot to display the time-series of GRPs for t
 ```{r}
 library(ggplot2)
 
-# Create the facet plot
+# Facet plot
 facet_labels <- c("own" = "Own GRP Over Time", "comp" = "Competitor GRP Over Time")
 
 ggplot(move_filtered, aes(x = week_end, y = grp)) +
@@ -415,7 +425,6 @@ Create a new variable **at the DMA-level**, `normalized_grp`, defined as `100*gr
 ```{r}
 mean_grp_dma_brand <- move[, .(mean_grp = mean(grp, na.rm = TRUE)), by = .(dma_code, brand_name)]
 
-# Step 2: Merge the mean back into the 'move' data table and calculate 'normalized_grp'
 move <- merge(move, mean_grp_dma_brand, by = c("dma_code", "brand_name"), all.x = TRUE)
 move[, normalized_grp := 100 * grp / mean_grp]
 
