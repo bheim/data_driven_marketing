@@ -149,6 +149,16 @@ Note: Never use over-sampling to create the validation sample, otherwise the off
 
 *Create an `offset_var` variable and add it to the data set. Then re-estimate the logistic regression. To tell `glm` that you want to use `offset_var`, you need to use a formula of the form:*
 
+y ~ offset(offset_var) + <all other variables>
+
+*Where* you place `offset()` on the right-hand side of the formula is irrelevant.
+
+\medskip
+
+*Before predicting the response rate in the validation sample set the offset to 0. Then, when you invoke the `predict` function, supply the data with the offset set to 0 using the `newdata` option.*
+
+*Compare the average predicted response with the average observed response rate in the validation sample.*
+
 ```{r}
 # Separate data into Y=1 and Y=0 groups
 data_Y1 = cell2cell_DT[churn == 1]
@@ -161,7 +171,6 @@ training_data = rbind(
   data_Y1[sample(.N, sample_size)],
   data_Y0[sample(.N, sample_size)]
 )
-
 # Define the validation data without oversampling (actual distribution)
 validation_data = cell2cell_DT[calibrat == 0]
 
@@ -199,14 +208,6 @@ mean_observed_response = mean(validation_data$churn)
 # Print results
 list(mean_predicted = mean_predicted_response, mean_observed = mean_observed_response)
 ```
-
-*Where* you place `offset()` on the right-hand side of the formula is irrelevant.
-
-\medskip
-
-*Before predicting the response rate in the validation sample set the offset to 0. Then, when you invoke the `predict` function, supply the data with the offset set to 0 using the `newdata` option.*
-
-*Compare the average predicted response with the average observed response rate in the validation sample.*
 
 \newpage
 
