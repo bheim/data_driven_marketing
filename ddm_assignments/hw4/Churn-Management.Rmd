@@ -160,52 +160,50 @@ y ~ offset(offset_var) + <all other variables>
 *Compare the average predicted response with the average observed response rate in the validation sample.*
 
 ```{r}
-# Separate data into Y=1 and Y=0 groups
 data_Y1 = cell2cell_DT[churn == 1]
 data_Y0 = cell2cell_DT[churn == 0]
 
-# Sample half from each group to create an oversampled training set
 set.seed(11111)  # Set seed for reproducibility
 sample_size = min(nrow(data_Y1), nrow(data_Y0))
 training_data = rbind(
   data_Y1[sample(.N, sample_size)],
   data_Y0[sample(.N, sample_size)]
 )
-# Define the validation data without oversampling (actual distribution)
+
 validation_data = cell2cell_DT[calibrat == 0]
 
-# Calculate the average response rate in training and validation samples
+
 p_t = mean(training_data$churn)  # Oversampled rate
 p_v = mean(validation_data$churn)  # True rate in the validation sample
 
-# Calculate the offset for the model
+
 offset_value = (log(p_t) - log(1 - p_t)) - (log(p_v) - log(1 - p_v))
 training_data[, offset_var := offset_value]
 
-# Define predictors (excluding churn, customer ID, and calibrat columns)
+
 predictors = setdiff(names(training_data), c("churn", "customer", "calibrat", "offset_var"))
 
-# Create formula with the offset
+
 formula = as.formula(paste("churn ~ offset(offset_var) +", paste(predictors, collapse = " + ")))
 
-# Fit the logistic regression model with the offset
+
 fit = glm(formula, data = training_data, family = binomial(link = "logit"))
 
-# Show model results
+
 results_DT = as.data.table(tidy(fit))
 kable(results_DT, digits = 5)
 
-# Set the offset to 0 in the validation data before predicting
+
 validation_data[, offset_var := 0]
 
-# Predict the response rate on the validation sample
+
 predicted_response = predict(fit, newdata = validation_data, type = "response")
 
-# Compare the average predicted and observed response rates
+
 mean_predicted_response = mean(predicted_response)
 mean_observed_response = mean(validation_data$churn)
 
-# Print results
+
 list(mean_predicted = mean_predicted_response, mean_observed = mean_observed_response)
 ```
 
@@ -262,6 +260,49 @@ As expected, because `x` is uniformly distributed on $[0,5]$, the five groups cr
 
 
 *Calculate a lift table for 20 segments. Inspect the lift table. Then provide two charts. First, plot the `score_group` segments on the x-axis versus the observed churn rate on the y-axis. Second, plot the segments versus the lift factor, and add a horizontal line at $y=100$. How to do this in ggplot2 is explained in the ggplot2 guide (look for the `yintercept` option).*
+
+```{r}
+liftTable <- function(predicted, observed, n_segments = 20) {
+  DT <- data.table(predicted = predicted, observed = observed)
+  DT[, score_group := cut_number(predicted, n = n_segments)]
+  DT[, score_group_no := as.integer(score_group)]
+  
+  lift_DT <- DT[, .(
+    avg_score = mean(predicted),
+    avg_observed = mean(observed),
+    lift_factor = mean(observed) / mean(DT$observed)
+  ), by = score_group_no]
+  
+  lift_DT
+}
+```
+
+```{r}
+lift_DT <- liftTable(predicted = predicted_response, observed = validation_data$churn, n_segments = 20)
+kable(lift_DT, digits = 3)
+```
+
+```{r}
+ggplot(lift_DT, aes(x = score_group_no, y = avg_observed)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    x = "Score Group",
+    y = "Observed Churn Rate",
+    title = "Observed Churn Rate by Score Group"
+  )
+```
+```{r}
+ggplot(lift_DT, aes(x = score_group_no, y = lift_factor * 100)) +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "red") +
+  labs(
+    x = "Score Group",
+    y = "Lift Factor (%)",
+    title = "Lift Factor by Score Group"
+  )
+```
 
 \newpage
 
