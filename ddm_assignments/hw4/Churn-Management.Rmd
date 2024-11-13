@@ -358,8 +358,33 @@ DT_lin_prob[, (input_columns) := lapply(.SD, standardize_columns), .SDcols = inp
 $$100 \cdot \frac{\bar{p}_{v}}{\bar{p}_{t}}$$
 This scales the effect sizes to the correct magnitude of the churn probabilities in the validation sample and puts the effects on a 0-100% scale.
 Sort the variables according to the magnitude of the effect sizes, and print the results table using `kable`.
+
+```{r}
+#Q4
+# Fit Linear Probability Model
+predictors = setdiff(names(DT_lin_prob), c("churn", "customer", "calibrat"))
+formula = as.formula(paste("churn ~", paste(predictors, collapse = " + ")))
+
+# Fit the logistic regression model
+fit = glm(formula, data = DT_lin_prob, family = binomial(link = "logit"))
+
+# 3. Calculate effect sizes
+# Extract coefficients using tidy() from the broom package
+results_DT = as.data.table(tidy(fit))
+
+# Calculate effect size using scaling formula
+p_t = mean(training_data$churn)  # Churn rate in the training data
+p_v = mean(validation_data$churn)  # Churn rate in the validation data
+results_DT[, effect_size := 100 * estimate * (p_v / p_t)]
+
+# Sort results by effect size and display the table
+results_DT = results_DT[order(abs(effect_size), decreasing = TRUE)]
+kable(results_DT, digits = 5)
+```
 5. Inspect the  results. Identify some factors that are strongly associated with churn. If actionable, propose an incentive that can be targeted to the customers to prevent churn.
- 
+
+
+
 \newpage
 
 
