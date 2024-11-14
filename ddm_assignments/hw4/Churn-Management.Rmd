@@ -55,7 +55,7 @@ Note that, in what follows, the key steps you need to take are highlighted in *i
 
 All data are contained in the file `Cell2Cell.RData`, which is posted on Canvas.
 
-```{r, eval = FALSE}
+```{r}
 load("Cell2Cell.RData")
 ls()
 ```
@@ -96,7 +96,7 @@ Using the `tidy` function in the `broom` package it is trivial to capture the re
 
 For `kable` to work, you need to load the `knitr` library.
 
-```{r, eval = FALSE}
+```{r}
 calibration_data = cell2cell_DT[calibrat == 1]
 
 predictors = setdiff(names(calibration_data), c("churn", "customer", "calibrat"))
@@ -160,15 +160,25 @@ y ~ offset(offset_var) + <all other variables>
 *Compare the average predicted response with the average observed response rate in the validation sample.*
 
 ```{r}
+mean(calibration_data$churn)
+```
+
+
+```{r}
+
+
 data_Y1 = cell2cell_DT[churn == 1]
 data_Y0 = cell2cell_DT[churn == 0]
 
+#TODO: this is making the training data include part of the validation sample. 
 set.seed(11111)  # Set seed for reproducibility
 sample_size = min(nrow(data_Y1), nrow(data_Y0))
 training_data = rbind(
   data_Y1[sample(.N, sample_size)],
   data_Y0[sample(.N, sample_size)]
 )
+
+training_data = calibration_data
 
 validation_data = cell2cell_DT[calibrat == 0]
 
@@ -307,8 +317,6 @@ ggplot(lift_DT, aes(x = score_group_no, y = lift_factor * 100)) +
 \newpage
 
 
-
-
 # Why do customers churn? --- Effect sizes
 
 We would like to understand *why* customers churn, which can help us to propose incentives to prevent customer churn
@@ -344,7 +352,7 @@ class(1)
 class(1L)
 ```
 In order to standardize all independent variables in the training data, you can use:
-```{r, eval = FALSE}
+```{r}
 DT_lin_prob = cell2cell_DT[calibrat == 1]
 
 # Create a vector that contains the names of all inputs (covariates)
@@ -405,6 +413,50 @@ Predict the program value for these 20 customer segments based on the predicted 
 \medskip
 
 Hint: It is easy to make little mistakes in the lifetime value predictions. Hence, be very clear about what your code is supposed to achieve, and check that every step is correct.
+
+```{r}
+# Goal: calculate LTV without churn program and LTV with churn program
+# Step 1: Create groups based on predicted_churn ranking.
+# Step 2: Create function calculates LTV without churn program (however, allow the function to take in a churn adjustment that we can plug gamma into) -> Sum for each year retention_rate^t * customer_profit divided by (1+.08)^t
+# Step 3: Calculate this for all groups and store the values
+# Step 4: Calculate this for all groups with churn adjustment of .25 and store the values
+# Step 5: Calculate this for all groups with churn adjustment of .5 and store the values
+
+# Key things to note: churn is monthly and so is revenue. Account for this fact.
+
+
+create_n_groups <- function(predicted, observed, n_segments) {
+  DT <- data.table(predicted_churn = predicted, observed_churn = observed$churn, observed_revenue = observed$revenue)
+  DT[, score_group := cut_number(predicted, n = n_segments)]
+  DT[, score_group_no := as.integer(score_group)]
+  
+  group_DT <- DT[, .(
+    avg_score = 12 * mean(predicted_churn),
+    avg_observed = 12 * mean(observed_churn),
+    avg_annual_revenue = 12 * mean(observed_revenue)
+  ), by = score_group_no]
+  
+  return(group_DT);
+}
+
+#Create groups based on predicted churn with data on predicted churn, observed churn, and annual revenue. Churn is adjusted for yearly churn.
+grouped_data = create_n_groups(predicted = predicted_response, observed = validation_data, n_segments=20)
+
+grouped_data
+
+calculate_LTV = function(observed_churn, churn_program_success, annual_revenue, years) {
+  # Key assumption: predicting average per person revenue while accounting for churn
+  total_revenue = 0
+  for(i in 0:years) {
+    total_revenue = total_revenue + ((1 - (observed_churn * (1 - churn_program_sucess)))^i * annual_revenue / (1 + .08)^i)
+  }
+}
+
+
+
+```
+
+
 
 \newpage
 
