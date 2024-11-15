@@ -431,8 +431,8 @@ create_n_groups <- function(predicted, observed, n_segments) {
   DT[, score_group_no := as.integer(score_group)]
   
   group_DT <- DT[, .(
-    avg_score = 12 * mean(predicted_churn),
-    avg_observed = 12 * mean(observed_churn),
+    avg_score = mean(predicted_churn),
+    avg_observed = 1 - (1 - mean(observed_churn))^12,
     avg_annual_revenue = 12 * mean(observed_revenue)
   ), by = score_group_no]
   
@@ -444,14 +444,33 @@ grouped_data = create_n_groups(predicted = predicted_response, observed = valida
 
 grouped_data
 
-calculate_LTV = function(observed_churn, churn_program_success, annual_revenue, years) {
+calculate_LTV <- function(observed_churn, churn_program_success, annual_revenue, years, discount_rate) {
   # Key assumption: predicting average per person revenue while accounting for churn
   total_revenue = 0
-  for(i in 0:years) {
-    total_revenue = total_revenue + ((1 - (observed_churn * (1 - churn_program_sucess)))^i * annual_revenue / (1 + .08)^i)
+  adjusted_churn_rate = observed_churn * (1 - churn_program_success)
+
+  for(t in 1:years) {
+    retention_rate = (1 - adjusted_churn_rate)^t
+    discounted_cash_flow = (annual_revenue * retention_rate) / (1 + discount_rate)^t
+    total_revenue = total_revenue + discounted_cash_flow
   }
+
+  return(total_revenue)
 }
 
+# Assuming years = 4, discount_rate = 8%
+years = 4
+discount_rate = 0.08
+success_probabilities = c(0.25, 0.5)
+
+# Calculate LTV for each group and each gamma
+grouped_data[, LTV_no_program := calculate_LTV(avg_observed, 0, avg_annual_revenue, years, discount_rate)]
+for(gamma in success_probabilities) {
+  grouped_data[, paste("LTV_with_gamma", gamma, sep = "_") := calculate_LTV(avg_observed, gamma, avg_annual_revenue, years, discount_rate)]
+
+print(grouped_data) # Sanity check
+
+}
 
 
 ```
