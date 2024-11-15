@@ -466,13 +466,12 @@ success_probabilities <- c(0.25, 0.5)
 grouped_data[, LTV_no_program := calculate_LTV(avg_observed, 0, avg_annual_revenue, years, discount_rate)]
 for (gamma in success_probabilities) {
   column_name <- paste("LTV_with_gamma", gamma, sep = "_")
-    grouped_data[, (column_name) := calculate_LTV(avg_observed, gamma, avg_annual_revenue, years, discount_rate)]
-    print(paste("Grouped data after adding column:", column_name))
-    print(grouped_data)
+  grouped_data[, (column_name) := calculate_LTV(avg_observed, gamma, avg_annual_revenue, years, discount_rate)]
 }
-
-print(grouped_data)
-
+```
+```{r}
+grouped_data = setorder(grouped_data, score_group_no)
+grouped_data
 ```
 
 
