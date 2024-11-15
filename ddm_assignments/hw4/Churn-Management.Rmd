@@ -440,9 +440,8 @@ create_n_groups <- function(predicted, observed, n_segments) {
 }
 
 #Create groups based on predicted churn with data on predicted churn, observed churn, and annual revenue. Churn is adjusted for yearly churn.
-grouped_data <- create_n_groups(predicted = predicted_response, observed = validation_data, n_segments=20)
+grouped_data = create_n_groups(predicted = predicted_response, observed = validation_data, n_segments=20)
 
-grouped_data
 
 calculate_LTV <- function(observed_churn, churn_program_success, annual_revenue, years, discount_rate) {
   # Key assumption: predicting average per person revenue while accounting for churn
@@ -465,12 +464,14 @@ success_probabilities <- c(0.25, 0.5)
 
 # Calculate LTV for each group and each gamma
 grouped_data[, LTV_no_program := calculate_LTV(avg_observed, 0, avg_annual_revenue, years, discount_rate)]
-for(gamma in success_probabilities) {
-  column_name = paste("LTV_with_gamma", gamma, sep = "_")
-  grouped_data[, (column_name) := calculate_LTV(avg_observed, gamma, avg_annual_revenue, years, discount_rate)]
+for (gamma in success_probabilities) {
+  column_name <- paste("LTV_with_gamma", gamma, sep = "_")
+    grouped_data[, (column_name) := calculate_LTV(avg_observed, gamma, avg_annual_revenue, years, discount_rate)]
+    print(paste("Grouped data after adding column:", column_name))
+    print(grouped_data)
 }
 
-print(grouped_data) # Sanity check
+print(grouped_data)
 
 ```
 
