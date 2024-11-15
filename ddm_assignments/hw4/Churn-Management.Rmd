@@ -459,9 +459,9 @@ calculate_LTV <- function(observed_churn, churn_program_success, annual_revenue,
 }
 
 # Assuming years = 4, discount_rate = 8%
-years = 4
-discount_rate = 0.08
-success_probabilities = c(0.25, 0.5)
+years <- 4
+discount_rate <- 0.08
+success_probabilities <- c(0.25, 0.5)
 
 # Calculate LTV for each group and each gamma
 grouped_data[, LTV_no_program := calculate_LTV(avg_observed, 0, avg_annual_revenue, years, discount_rate)]
