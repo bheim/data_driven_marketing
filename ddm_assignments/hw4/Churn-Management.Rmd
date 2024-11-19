@@ -277,6 +277,7 @@ liftTable <- function(predicted, observed, n_segments = 20) {
 
 ```{r}
 lift_DT <- liftTable(predicted = predicted_response, observed = validation_data$churn, n_segments = 20)
+setorder(lift_DT, score_group_no)
 kable(lift_DT, digits = 3)
 ```
 
