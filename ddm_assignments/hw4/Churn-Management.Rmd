@@ -2,10 +2,10 @@
 title: "Churn Management"
 author: "Ben Heim, Marcell Milo-Sidlo, Julia Luo, Pierre Chan, Alicia Soosai"
 output:
+  word_document:
+    toc: yes
   pdf_document:
     number_sections: yes
-    toc: yes
-  word_document:
     toc: yes
 urlcolor: blue
 graphics: yes
@@ -165,18 +165,6 @@ mean(calibration_data$churn)
 
 
 ```{r}
-
-
-data_Y1 = cell2cell_DT[churn == 1]
-data_Y0 = cell2cell_DT[churn == 0]
-
-#TODO: this is making the training data include part of the validation sample. 
-set.seed(11111)  # Set seed for reproducibility
-sample_size = min(nrow(data_Y1), nrow(data_Y0))
-training_data = rbind(
-  data_Y1[sample(.N, sample_size)],
-  data_Y0[sample(.N, sample_size)]
-)
 
 training_data = calibration_data
 
