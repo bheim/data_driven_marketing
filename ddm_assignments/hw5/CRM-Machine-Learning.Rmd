@@ -40,7 +40,7 @@ The customer features are largely self-explanatory. For example, `orders_online_
 Load the `crm_DT` data.table.
 
 ```{r}
-load("C:/Users/gcompiani/Dropbox/Teaching/37105/Assignments/05 CRM-Machine-Learning/Data/Customer-Development-2017.RData")
+load("Customer-Development-2017.RData")
 ```
 
 \bigskip
@@ -68,6 +68,34 @@ crm_DT[, training_sample := rbinom(nrow(crm_DT), 1, 0.5)]
 # Data inspection [15 points]
 
 Summarize and describe some key aspects of the `outcome_spend` variable. In particular, what is the purchase incidence (i.e., what fraction of customers make a purchase), what is the distribution of dollar spending, and what is the conditional distribution of dollar spending given that a customer made a purchase?
+```{r}
+summary(crm_DT$outcome_spend)
+purchase_incidence <- mean(crm_DT$outcome_spend > 0)
+spend_distribution <- crm_DT[outcome_spend > 0, .(mean_spend = mean(outcome_spend), median_spend = median(outcome_spend))]
+
+print(purchase_incidence)
+print(spend_distribution)
+```
+```{r}
+ggplot(crm_DT, aes(x = outcome_spend)) +
+  geom_histogram(binwidth = 10, fill = "skyblue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Spending (All Customers)",
+       x = "Spending ($)", y = "Number of Customers") +
+  theme_minimal()
+```
+
+```{r}
+customers_with_purchase <- crm_DT[outcome_spend > 0]
+
+ggplot(customers_with_purchase, aes(x = outcome_spend)) +
+  geom_histogram(binwidth = 10, fill = "lightgreen", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Spending (Customers Who Made a Purchase)",
+       x = "Spending ($)", y = "Number of Customers") +
+  theme_minimal()
+```
+The outcome_spend variable captures the total dollar amount spent by customers within the given time frame. Analyzing it allows us to gain an insight into purchase behaviors, like the percentage of customers that ended up making a purchase as well as general spending distribution among all customers. 
+From the data, we see that the mean customer spending is a mere 7.98 dollars, while the maximum stands at 1462.84 dollars. The low mean spending is a result of a purchase incidence of 6.2% (i.e. only 6.2% of customers made a purchase). Of those who did end up purchasing a product, the mean spend was 128.55 dollars, while the median purchase cost 88.95 dollars. 
+Graphing the distribution of purchase amounts accentuates the fact that the vast majority of customers do not end up making a purchase. Graphing the spending from only customers who spent money, we see that the majority of customers spend between 0 and 250 dollars, with a long tail towards higher spending amounts.
 
 \newpage
 
@@ -143,6 +171,74 @@ Estimate and compare the following models:
 2. LASSO
 3. Elastic net
 
+```{r}
+training_DT <- crm_DT[training_sample == 1 & W == 1]
+
+# Create model matrix excluding non-feature columns
+X <- model.matrix(outcome_spend ~ ., 
+                 data = training_DT[, !c("customer_id", "W", "training_sample"), with = FALSE])
+y <- training_DT$outcome_spend
+
+# Set cross-validation folds
+set.seed(37105)
+N_obs_training <- nrow(training_DT)
+folds <- sample(1:10, N_obs_training, replace = TRUE)
+
+# 1. OLS Model
+ols_model <- lm(outcome_spend ~ ., 
+                data = training_DT[, !c("customer_id", "W", "training_sample"), with = FALSE])
+
+# 2. LASSO Model
+lasso_model <- cv.glmnet(X, y, 
+                        alpha = 1, 
+                        nfolds = 10, 
+                        foldid = folds)
+
+# 3. Elastic Net Model
+elastic_net_model <- cv.glmnet(X, y, 
+                              alpha = 0.5, 
+                              nfolds = 10, 
+                              foldid = folds)
+
+# Extract coefficients
+coef_comparison <- data.table(
+  Feature = rownames(coef(ols_model)),
+  OLS = as.numeric(coef(ols_model)),
+  LASSO = as.numeric(coef(lasso_model, s = "lambda.min")),
+  Elastic_Net = as.numeric(coef(elastic_net_model, s = "lambda.min"))
+)
+
+# Compute model summaries
+n_variables <- list(
+  ols = length(coef(ols_model)) - 1,  # Subtract intercept
+  lasso = sum(coef(lasso_model, s = "lambda.min") != 0) - 1,
+  elastic_net = sum(coef(elastic_net_model, s = "lambda.min") != 0) - 1
+)
+
+lambda_min <- list(
+  lasso = lasso_model$lambda.min,
+  elastic_net = elastic_net_model$lambda.min
+)
+
+# Print summary statistics
+cat("\nNumber of variables selected by each model:\n")
+cat("OLS:", n_variables$ols, "\n")
+cat("LASSO:", n_variables$lasso, "\n")
+cat("Elastic Net:", n_variables$elastic_net, "\n")
+
+cat("\nOptimal lambda values:\n")
+cat("LASSO lambda.min:", lambda_min$lasso, "\n")
+cat("Elastic Net lambda.min:", lambda_min$elastic_net, "\n")
+
+# Store models for later use
+models <- list(
+  ols = ols_model,
+  lasso = lasso_model,
+  elastic_net = elastic_net_model
+)
+```
+
+
 \bigskip
 
 
@@ -158,7 +254,7 @@ set.seed(37105)
 N_obs_training = nrow(training_DT)
 folds = sample(1:10, N_obs_training, replace = TRUE)
 
-fit_glmnet = cv.glmnet(..., foldid = folds)
+fit_glmnet = cv.glmnet(X, y, foldid = folds)
 ```
 
      For comparability with my solution, please use the same seed (37105) that I set above.
@@ -172,6 +268,10 @@ fit_glmnet = cv.glmnet(..., foldid = folds)
 
 
 Compare the estimated coefficients for OLS, the LASSO, and the elastic net. How "sparse" is the prediction problem, i.e. how many inputs are selected by the LASSO and the elastic net?
+
+OLS, LASSO, and the elastic net each used very different numbers of inputs. OLS used a total of 146, while LASSO used 45. The elastic net used an intermediary amount, 65 inputs to be precise.
+The comparison of coefficients between the models revealed a few key patterns. Firstly, OLS coefficients tend to be larger in magnitude than their LASSO and elastic net counterparts, since there is not regularization to shrink them. LASSO produced the sparsest model out of the three, with many features deemed redundant/not crucial for predicting customer spending. The coefficients of the elastic net model generally fall between the OLS and LASSO models in terms of their magnitude, reflecting possibly a more balanced approach. The model overall retained more non-zero coefficients than LASSO, but with smaller magnitudes than OLS.
+The fact that LASSO and Elastic Net both select significantly fewer variables than the full model while maintaining predictive power (as we'll see in the validation section) indicates that many of the original features may be redundant or not strongly predictive of customer spending.
 
 \newpage
 
