@@ -174,12 +174,10 @@ Estimate and compare the following models:
 ```{r}
 training_DT <- crm_DT[training_sample == 1 & W == 1]
 
-# Create model matrix excluding non-feature columns
 X <- model.matrix(outcome_spend ~ ., 
                  data = training_DT[, !c("customer_id", "W", "training_sample"), with = FALSE])
 y <- training_DT$outcome_spend
 
-# Set cross-validation folds
 set.seed(37105)
 N_obs_training <- nrow(training_DT)
 folds <- sample(1:10, N_obs_training, replace = TRUE)
@@ -200,7 +198,6 @@ elastic_net_model <- cv.glmnet(X, y,
                               nfolds = 10, 
                               foldid = folds)
 
-# Extract coefficients
 coef_comparison <- data.table(
   Feature = rownames(coef(ols_model)),
   OLS = as.numeric(coef(ols_model)),
@@ -208,7 +205,6 @@ coef_comparison <- data.table(
   Elastic_Net = as.numeric(coef(elastic_net_model, s = "lambda.min"))
 )
 
-# Compute model summaries
 n_variables <- list(
   ols = length(coef(ols_model)) - 1,  # Subtract intercept
   lasso = sum(coef(lasso_model, s = "lambda.min") != 0) - 1,
@@ -220,7 +216,6 @@ lambda_min <- list(
   elastic_net = elastic_net_model$lambda.min
 )
 
-# Print summary statistics
 cat("\nNumber of variables selected by each model:\n")
 cat("OLS:", n_variables$ols, "\n")
 cat("LASSO:", n_variables$lasso, "\n")
@@ -230,7 +225,6 @@ cat("\nOptimal lambda values:\n")
 cat("LASSO lambda.min:", lambda_min$lasso, "\n")
 cat("Elastic Net lambda.min:", lambda_min$elastic_net, "\n")
 
-# Store models for later use
 models <- list(
   ols = ols_model,
   lasso = lasso_model,
