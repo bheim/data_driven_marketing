@@ -282,6 +282,86 @@ Second, create lift tables and charts (use 20 scores/groups), plot the lifts, an
 
 Overall, how well do the models fit?
 
+```{r}
+#Step 1 - Taking the validation sample of Wi=1 from the training_sample
+validation_DT <- crm_DT[training_sample == 0 & W == 1]
+
+X_validation <- model.matrix(outcome_spend ~ ., 
+                             data = validation_DT[, !c("customer_id", "W", "training_sample"), with = FALSE])
+y_validation <- validation_DT$outcome_spend
+```
+
+```{r}
+# Step 1 - Training Predictions
+pred_ols <- predict(ols_model, newdata = validation_DT[, !c("customer_id", "W", "training_sample"), with = FALSE])
+pred_lasso <- predict(lasso_model, newx = X_validation, s = "lambda.min")
+pred_elastic_net <- predict(elastic_net_model, newx = X_validation, s = "lambda.min")
+```
+
+```{r}
+#Step 1 - Findings of the Mean Squared Error (MSE) 
+mse <- function(true, predicted) mean((true - predicted)^2)
+
+mse_values <- data.table(
+  Model = c("OLS", "LASSO", "Elastic Net"),
+  MSE = c(mse(y_validation, pred_ols),
+          mse(y_validation, pred_lasso),
+          mse(y_validation, pred_elastic_net))
+)
+print(mse_values)
+```
+
+```{r}
+#Step 2 - Calculating the Lift Table 
+lift_table <- function(predictions, actual, n_groups = 20) {
+  # Ensure numeric vectors
+  predictions <- as.numeric(predictions)
+  actual <- as.numeric(actual)
+  
+  # Create a data.table with ranks and groups
+  data <- data.table(Predicted = predictions, Actual = actual)
+  data[, Rank := frank(Predicted, ties.method = "first")]
+  data[, Group := ceiling(Rank / (nrow(data) / n_groups))]
+  
+  # Compute mean predicted and actual values for each group
+  lift <- data[, .(
+    Predicted_Mean = mean(Predicted, na.rm = TRUE), 
+    Actual_Mean = mean(Actual, na.rm = TRUE)
+  ), by = Group][order(Group)]
+  
+  return(lift)
+}
+```
+
+```{r}
+# Generate lift tables
+lift_ols <- lift_table(pred_ols, y_validation)
+lift_lasso <- lift_table(pred_lasso, y_validation)
+lift_elastic_net <- lift_table(pred_elastic_net, y_validation)
+
+# Combine results for comparison
+lift_combined <- rbind(
+  cbind(lift_ols, Model = "OLS"),
+  cbind(lift_lasso, Model = "LASSO"),
+  cbind(lift_elastic_net, Model = "Elastic Net")
+)
+```
+
+```{r}
+# Plot lift chart
+ggplot(lift_combined, aes(x = Group, y = Actual_Mean, color = Model)) +
+  geom_line() +
+  labs(
+    title = "Lift Chart",
+    x = "Group (Decile)",
+    y = "Mean Spending",
+    color = "Model"
+  ) +
+  theme_minimal()
+```
+
+The model with the lowest MSE (Elastic Net) fits the data better with more accuracy overall. (Not too sure about how to comment on the Lift chart).
+
 \newpage
 
 
