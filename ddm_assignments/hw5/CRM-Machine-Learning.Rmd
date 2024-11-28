@@ -360,7 +360,8 @@ ggplot(lift_combined, aes(x = Group, y = Actual_Mean, color = Model)) +
   theme_minimal()
 ```
 
-The model with the lowest MSE (Elastic Net) fits the data better with more accuracy overall. (Not too sure about how to comment on the Lift chart).
+The model with the lowest MSE (Elastic Net), which is closely followed by LASSO, fits the data better with more accuracy overall. This means that Elastic Net and LASSO effectively reduce overfitting by applying regularization, which enhances generalizability, particularly when there are many predictors or collinearities in the data. The reasoning for this is because Elastic Net Employs Ridge and LASSO Regression while LASSO reduces irrelevant coefficients to 0, which significatly reduces overfitting. 
+The lift chart demonstrates similar segmentation performance across all three models, with only minor differences in decile group predictions. All models effectively identify high-value customers (Groups 15–20), with no clear dominance by Elastic Net or LASSO. Therefore, to this extent, all of the models properly fit the values of the original data. 
 
 \newpage
 
