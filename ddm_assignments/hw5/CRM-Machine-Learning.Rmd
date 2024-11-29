@@ -391,6 +391,33 @@ cost   = 0.99           # 99 cents
 
 What is the percentage of customers who should be targeted based on this analysis?
 
+Strategy:
+- Select all customers from validation sample
+- Use elastic model to predict spend
+- Use margin, cost to find predicted profit
+- Find proportion of customers with positive profit
+
+```{r}
+validation_DT <- crm_DT[training_sample == 0]
+predictions_elastic_net <- predict(elastic_net_model, newx = X_validation, s = "lambda.min")
+
+pred_elastic_net <- predict(elastic_net_model, newx = X_validation, s = "lambda.min")
+
+margin <- 0.325
+cost <- 0.99
+profit <- (pred_elastic_net * margin) - cost
+
+positive_profit_customers <- profit[profit > 0]
+proportion_to_target <- length(positive_profit_customers) / length(profit)
+cat("Proportion of customers to target:", proportion_to_target, "\n")
+
+```
+
+
+
+### Part 6 Answer
+We used elastic net since this showed the lowest MSE in our analysis in part 5. To complete this analysis, we selected all customers from the validation sample and used the elastic net model to predict their spend. We then used the margin and cost data to predict corresponding profit and then found the proportion of customers will a positive profit. Overall, we found that 59.9% of customers should be targeted based on this analysis as we predict 59.9% of customers selected to generate a positive profit through targeting (the model also tells us which customers to target, but we're not conducting that analysis here).
+
 \newpage
 
 
