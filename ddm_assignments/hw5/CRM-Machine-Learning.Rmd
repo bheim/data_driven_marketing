@@ -10,7 +10,7 @@ graphics: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = FALSE,
+knitr::opts_chunk$set(echo = TRUE, comment = NA, message = FALSE, eval = TRUE,
                       fig.width = 6, fig.height = 4.5, fig.align = "right")
 ```
 
@@ -83,6 +83,7 @@ ggplot(crm_DT, aes(x = outcome_spend)) +
        x = "Spending ($)", y = "Number of Customers") +
   theme_minimal()
 ```
+Comment: this has a huge outlier (or potentially a few huge outliers), should we set a max on this so the graph is somewhat legible?
 
 ```{r}
 customers_with_purchase <- crm_DT[outcome_spend > 0]
@@ -265,6 +266,9 @@ Compare the estimated coefficients for OLS, the LASSO, and the elastic net. How 
 
 OLS, LASSO, and the elastic net each used very different numbers of inputs. OLS used a total of 146, while LASSO used 45. The elastic net used an intermediary amount, 65 inputs to be precise.
 The comparison of coefficients between the models revealed a few key patterns. Firstly, OLS coefficients tend to be larger in magnitude than their LASSO and elastic net counterparts, since there is not regularization to shrink them. LASSO produced the sparsest model out of the three, with many features deemed redundant/not crucial for predicting customer spending. The coefficients of the elastic net model generally fall between the OLS and LASSO models in terms of their magnitude, reflecting possibly a more balanced approach. The model overall retained more non-zero coefficients than LASSO, but with smaller magnitudes than OLS.
+
+Comment: should we mention that Ridge regression is used in Elastic to explain why there's an increase in #. of variables?
+
 The fact that LASSO and Elastic Net both select significantly fewer variables than the full model while maintaining predictive power (as we'll see in the validation section) indicates that many of the original features may be redundant or not strongly predictive of customer spending.
 
 \newpage
