@@ -426,5 +426,10 @@ We used elastic net since this showed the lowest MSE in our analysis in part 5. 
 
 Under what conditions is the analysis in the last section valid? In particular, what could invalidate the assumption that spending is zero whenever a customer is not targeted, i.e. $\mathbb{E}(Y_{i}|\boldsymbol{x}_{i}, W_i=0) = 0$, in the context of our data? Discuss.
 
+A key assumption in our part 6 analysis is that if we don't target a customer, their spend will be 0. This does not hold if a customer would make the purchase whether or not we target them or not. This goes back to a similar problem we experienced with identifying causal forces. The information that would be most useful to us is about the incremental spend we would yield from each customer if we target them. Then, we would simply target those customers where incremental spend > targeting spend.
+
+To get this data, we would have to conduct a randomized experiment on our customers - randoly targeting or not targeting them. This would create a counterfactual. Then, we could look at the difference in spending between the two groups and determine the incremental effect of advertising. We could break this down further by introducing covariates such as race, age, past-spending, etc. to get a better sense for how the incremental spend changes based on the characteristics of the customer. This would be a robust analysis for finding the most cost-efficient way to target customers - alas, it would also involve potentially high costs or lost revenue in the short-term due to the randomized targeting strategy.
+
+With the data we have, we can't simply subtract the average spend on non-targeted customers in this example as the groups weren't randomized.
 
 
