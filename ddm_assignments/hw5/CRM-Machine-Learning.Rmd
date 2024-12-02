@@ -83,7 +83,7 @@ ggplot(crm_DT, aes(x = outcome_spend)) +
        x = "Spending ($)", y = "Number of Customers") +
   theme_minimal()
 ```
-Comment: this has a huge outlier (or potentially a few huge outliers), should we set a max on this so the graph is somewhat legible?
+Comment: this has a huge outlier (or potentially a few huge outliers), should we comment on why we're not setting a max here to make it more legible?
 
 ```{r}
 customers_with_purchase <- crm_DT[outcome_spend > 0]
