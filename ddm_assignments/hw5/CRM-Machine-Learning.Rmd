@@ -83,7 +83,7 @@ ggplot(crm_DT, aes(x = outcome_spend)) +
        x = "Spending ($)", y = "Number of Customers") +
   theme_minimal()
 ```
-Comment: this has a huge outlier (or potentially a few huge outliers), should we comment on why we're not setting a max here to make it more legible?
+The spending distribution is highly skewed, with most customers spending $0$ and a small number of high-value customers contributing disproportionately to the total. For visualization, we retain all values to preserve the dataset's integrity. However, to analyze trends in typical spending behavior, we may consider transformations (e.g., log scale) or capping outliers (e.g., at the 99th percentile). This ensures insights into general patterns without losing information about exceptional cases.
 
 ```{r}
 customers_with_purchase <- crm_DT[outcome_spend > 0]
@@ -125,7 +125,22 @@ corrplot(cor_matrix, method = "number", number.cex = 0.25, addgrid.col = NA,
          type = "lower", diag = FALSE,
          tl.cex = 0.4, tl.col = "gray10")
 dev.off()
+
+options(repr.plot.width = 40, repr.plot.height = 40)
+corrplot(cor_matrix, method = "color",
+         type = "lower", diag = FALSE,
+         tl.cex = 0.5,
+         tl.col = "black",
+         cl.cex = 0.8)
+
+corrplot(cor_matrix, method = "number", number.cex = 0.25, addgrid.col = NA,
+         type = "lower", diag = FALSE,
+         tl.cex = 0.5,
+         tl.col = "black") ## Chart is really bunched up because of space
+
+# Correlation matrix on PDF looks much better
 ```
+
 
 Create a data table that contains the correlations for all variable pairs:
 
@@ -267,7 +282,7 @@ Compare the estimated coefficients for OLS, the LASSO, and the elastic net. How 
 OLS, LASSO, and the elastic net each used very different numbers of inputs. OLS used a total of 146, while LASSO used 45. The elastic net used an intermediary amount, 65 inputs to be precise.
 The comparison of coefficients between the models revealed a few key patterns. Firstly, OLS coefficients tend to be larger in magnitude than their LASSO and elastic net counterparts, since there is not regularization to shrink them. LASSO produced the sparsest model out of the three, with many features deemed redundant/not crucial for predicting customer spending. The coefficients of the elastic net model generally fall between the OLS and LASSO models in terms of their magnitude, reflecting possibly a more balanced approach. The model overall retained more non-zero coefficients than LASSO, but with smaller magnitudes than OLS.
 
-Comment: should we mention that Ridge regression is used in Elastic to explain why there's an increase in #. of variables?
+The Elastic Net's use of both L1 (LASSO) and L2 (Ridge) regularization explains its intermediate level of sparsity. While the L1 component promotes sparsity by shrinking coefficients of less relevant variables to zero, the L2 component mitigates this effect by distributing weight among correlated predictors, resulting in more non-zero coefficients compared to LASSO.
 
 The fact that LASSO and Elastic Net both select significantly fewer variables than the full model while maintaining predictive power (as we'll see in the validation section) indicates that many of the original features may be redundant or not strongly predictive of customer spending.
 
